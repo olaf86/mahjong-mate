@@ -20,6 +20,7 @@ Firebase コンソールで新規プロジェクトを作成します。
 - iOS Bundle ID: `com.example.mahjongMate` など任意
 - `GoogleService-Info.plist` をダウンロード
 - `mahjong_mate/ios/Runner/GoogleService-Info.plist` に配置
+ - Xcode で `Runner` ターゲットの `Copy Bundle Resources` に追加されていることを確認
 
 注意: iOS の Bundle ID を変更する場合は `ios/Runner.xcodeproj` でも一致させてください。
 
