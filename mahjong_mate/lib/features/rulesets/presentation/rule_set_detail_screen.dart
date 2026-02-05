@@ -13,49 +13,61 @@ class RuleSetDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ruleSet = ref.watch(ruleSetByIdProvider(ruleSetId));
-    if (ruleSet == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('ルールセットが見つかりません')),
-        body: const Center(child: Text('指定されたルールセットは存在しません。')),
-      );
-    }
+    final ruleSetAsync = ref.watch(ruleSetByIdProvider(ruleSetId));
 
-    final grouped = <RuleCategory, List<RuleItem>>{};
-    for (final item in ruleSet.items) {
-      grouped.putIfAbsent(item.category, () => []).add(item);
-    }
+    return ruleSetAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => Scaffold(
+        appBar: AppBar(title: const Text('読み込みに失敗しました')),
+        body: Center(child: Text(error.toString())),
+      ),
+      data: (ruleSet) {
+        if (ruleSet == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('ルールセットが見つかりません')),
+            body: const Center(child: Text('指定されたルールセットは存在しません。')),
+          );
+        }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(ruleSet.name),
-        actions: [
-          IconButton(
-            onPressed: () => context.goNamed(
-              'ruleset-edit',
-              pathParameters: {'id': ruleSet.id},
-            ),
-            icon: const Icon(Icons.edit),
+        final grouped = <RuleCategory, List<RuleItem>>{};
+        for (final item in ruleSet.items) {
+          grouped.putIfAbsent(item.category, () => []).add(item);
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(ruleSet.name),
+            actions: [
+              IconButton(
+                onPressed: () => context.goNamed(
+                  'ruleset-edit',
+                  pathParameters: {'id': ruleSet.id},
+                ),
+                icon: const Icon(Icons.edit),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        children: [
-          _HeaderCard(
-            name: ruleSet.name,
-            description: ruleSet.description,
-            ownerName: ruleSet.ownerName,
-            shareCode: ruleSet.shareCode,
-            isPublic: ruleSet.isPublic,
+          body: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            children: [
+              _HeaderCard(
+                name: ruleSet.name,
+                description: ruleSet.description,
+                ownerName: ruleSet.ownerName,
+                shareCode: ruleSet.shareCode,
+                isPublic: ruleSet.isPublic,
+              ),
+              const SizedBox(height: 16),
+              ...RuleCategory.values.map((category) {
+                final items = grouped[category] ?? const [];
+                return _CategorySection(category: category, items: items);
+              }),
+            ],
           ),
-          const SizedBox(height: 16),
-          ...RuleCategory.values.map((category) {
-            final items = grouped[category] ?? const [];
-            return _CategorySection(category: category, items: items);
-          }),
-        ],
-      ),
+        );
+      },
     );
   }
 }

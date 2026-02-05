@@ -1,4 +1,5 @@
 import 'rule_item.dart';
+import 'rule_set_visibility.dart';
 
 class RuleSet {
   const RuleSet({
@@ -8,7 +9,9 @@ class RuleSet {
     required this.ownerName,
     required this.items,
     this.shareCode,
-    this.isPublic = false,
+    this.visibility = RuleSetVisibility.private,
+    this.ownerDeviceId,
+    this.updatedAt,
   });
 
   final String id;
@@ -17,5 +20,9 @@ class RuleSet {
   final String ownerName;
   final List<RuleItem> items;
   final String? shareCode;
-  final bool isPublic;
+  final RuleSetVisibility visibility;
+  final String? ownerDeviceId;
+  final DateTime? updatedAt;
+
+  bool get isPublic => visibility == RuleSetVisibility.public;
 }

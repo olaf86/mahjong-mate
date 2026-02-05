@@ -20,23 +20,30 @@ class RuleSetListScreen extends ConsumerWidget {
         label: const Text('新規作成'),
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-          children: [
-            Text('Mahjong Mate', style: Theme.of(context).textTheme.labelLarge),
-            const SizedBox(height: 8),
-            Text(
-              'ルールセットを整理して、卓や雀荘へすぐ配信。',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'メインコミュニティの採用ルールと役の解釈を、いつでも最新版で共有できます。',
-              style: Theme.of(context).textTheme.bodyLarge,
-            ),
-            const SizedBox(height: 24),
-            ...ruleSets.map((ruleSet) => _RuleSetCard(ruleSet: ruleSet)),
-          ],
+        child: ruleSets.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => _ErrorState(error: error),
+          data: (items) => ListView(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+            children: [
+              Text('Mahjong Mate', style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 8),
+              Text(
+                'ルールセットを整理して、卓や雀荘へすぐ配信。',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'メインコミュニティの採用ルールと役の解釈を、いつでも最新版で共有できます。',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 24),
+              if (items.isEmpty)
+                const _EmptyState()
+              else
+                ...items.map((ruleSet) => _RuleSetCard(ruleSet: ruleSet)),
+            ],
+          ),
         ),
       ),
     );
@@ -119,6 +126,57 @@ class _RuleSetCard extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('まだルールセットがありません。', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              '右下の「新規作成」から最初のルールセットを追加してください。',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.error});
+
+  final Object error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('読み込みに失敗しました。', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 8),
+            Text(
+              error.toString(),
+              style: Theme.of(context).textTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );

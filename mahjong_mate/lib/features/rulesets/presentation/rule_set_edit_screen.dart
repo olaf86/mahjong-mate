@@ -37,28 +37,45 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
     _initialized = true;
     final ruleSetId = widget.ruleSetId;
     if (ruleSetId == null) return;
-    final ruleSet = ref.read(ruleSetByIdProvider(ruleSetId));
-    if (ruleSet == null) return;
-    _nameController.text = ruleSet.name;
-    _descriptionController.text = ruleSet.description;
+    final ruleSetAsync = ref.read(ruleSetByIdProvider(ruleSetId));
+    ruleSetAsync.whenData((ruleSet) {
+      if (ruleSet == null) return;
+      _nameController.text = ruleSet.name;
+      _descriptionController.text = ruleSet.description;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     _initializeIfNeeded();
     final ruleSetId = widget.ruleSetId;
-    final ruleSet = ruleSetId == null ? null : ref.watch(ruleSetByIdProvider(ruleSetId));
+    final ruleSetAsync = ruleSetId == null ? null : ref.watch(ruleSetByIdProvider(ruleSetId));
 
-    if (ruleSetId != null && ruleSet == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('ルールセットが見つかりません')),
-        body: const Center(child: Text('指定されたルールセットは存在しません。')),
-      );
-    }
+    return ruleSetAsync?.when(
+          loading: () => const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          ),
+          error: (error, _) => Scaffold(
+            appBar: AppBar(title: const Text('読み込みに失敗しました')),
+            body: Center(child: Text(error.toString())),
+          ),
+          data: (ruleSet) {
+            if (ruleSetId != null && ruleSet == null) {
+              return Scaffold(
+                appBar: AppBar(title: const Text('ルールセットが見つかりません')),
+                body: const Center(child: Text('指定されたルールセットは存在しません。')),
+              );
+            }
+            return _buildForm(context, ruleSetId == null ? 'ルールセット作成' : 'ルールセット編集');
+          },
+        ) ??
+        _buildForm(context, 'ルールセット作成');
+  }
 
+  Widget _buildForm(BuildContext context, String title) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(ruleSetId == null ? 'ルールセット作成' : 'ルールセット編集'),
+        title: Text(title),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),

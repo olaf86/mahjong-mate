@@ -2,6 +2,10 @@
 
 A new Flutter project.
 
+## Firebase Setup
+
+See `docs/firebase_setup.md`.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
