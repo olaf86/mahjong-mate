@@ -100,27 +100,28 @@ class _RuleSetCard extends StatelessWidget {
                   }).toList(),
                 ),
                 const SizedBox(height: 12),
-                Row(
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.verified_user, size: 16),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        'オーナー: ${ruleSet.ownerName}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (ruleSet.shareCode != null)
-                      Flexible(
-                        child: Text(
-                          '共有コード ${ruleSet.shareCode}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.end,
+                    Row(
+                      children: [
+                        const Icon(Icons.verified_user, size: 16),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'オーナー: ${ruleSet.ownerName}',
+                            softWrap: true,
+                          ),
                         ),
+                      ],
+                    ),
+                    if (ruleSet.shareCode != null) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        '共有コード ${ruleSet.shareCode}',
+                        softWrap: true,
                       ),
+                    ],
                   ],
                 ),
               ],

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -11,6 +12,7 @@ class RuleSetRepository {
   RuleSetRepository(this._firestore);
 
   final FirebaseFirestore _firestore;
+  final Random _random = Random();
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('rule_sets');
@@ -26,6 +28,66 @@ class RuleSetRepository {
         .map(_mapQuery);
 
     return _mergeStreams(publicStream, ownedStream);
+  }
+
+  Future<RuleSet> createRuleSet({
+    required String name,
+    required String description,
+    required String ownerName,
+    required String ownerDeviceId,
+    required RuleSetVisibility visibility,
+    required List<RuleItem> items,
+  }) async {
+    final doc = _collection.doc();
+    final shareCode = _ensureShareCode(visibility: visibility, existing: null);
+    final now = DateTime.now();
+
+    await doc.set({
+      'name': name,
+      'description': description,
+      'ownerName': ownerName,
+      'ownerDeviceId': ownerDeviceId,
+      'shareCode': shareCode,
+      'visibility': visibility.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'items': items.map(_itemToMap).toList(),
+    });
+
+    return RuleSet(
+      id: doc.id,
+      name: name,
+      description: description,
+      ownerName: ownerName,
+      ownerDeviceId: ownerDeviceId,
+      shareCode: shareCode,
+      visibility: visibility,
+      updatedAt: now,
+      items: items,
+    );
+  }
+
+  Future<void> updateRuleSet({
+    required String id,
+    required String name,
+    required String description,
+    required String ownerName,
+    required String ownerDeviceId,
+    required RuleSetVisibility visibility,
+    required List<RuleItem> items,
+    required String? shareCode,
+  }) async {
+    final doc = _collection.doc(id);
+    final nextShareCode = _ensureShareCode(visibility: visibility, existing: shareCode);
+    await doc.update({
+      'name': name,
+      'description': description,
+      'ownerName': ownerName,
+      'ownerDeviceId': ownerDeviceId,
+      'shareCode': nextShareCode,
+      'visibility': visibility.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+      'items': items.map(_itemToMap).toList(),
+    });
   }
 
   List<RuleSet> _mapQuery(QuerySnapshot<Map<String, dynamic>> snapshot) {
@@ -63,6 +125,16 @@ class RuleSetRepository {
       updatedAt: _parseTimestamp(data['updatedAt']),
       items: items,
     );
+  }
+
+  Map<String, dynamic> _itemToMap(RuleItem item) {
+    return {
+      'id': item.id,
+      'category': item.category.name,
+      'title': item.title,
+      'description': item.description,
+      'priority': item.priority,
+    };
   }
 
   Stream<List<RuleSet>> _mergeStreams(
@@ -167,5 +239,27 @@ class RuleSetRepository {
 
   String _randomId(String prefix) {
     return '${prefix}_${DateTime.now().millisecondsSinceEpoch}';
+  }
+
+  String? _ensureShareCode({
+    required RuleSetVisibility visibility,
+    required String? existing,
+  }) {
+    if (visibility != RuleSetVisibility.public) {
+      return null;
+    }
+    if (existing != null && existing.isNotEmpty) {
+      return existing;
+    }
+    return 'MJM-${_generateShareCode()}';
+  }
+
+  String _generateShareCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    final buffer = StringBuffer();
+    for (var i = 0; i < 4; i++) {
+      buffer.write(chars[_random.nextInt(chars.length)]);
+    }
+    return buffer.toString();
   }
 }
