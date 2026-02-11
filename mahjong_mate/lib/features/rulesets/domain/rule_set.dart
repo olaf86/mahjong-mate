@@ -1,4 +1,5 @@
 import 'rule_item.dart';
+import 'rule_set_rules.dart';
 import 'rule_set_visibility.dart';
 
 class RuleSet {
@@ -12,6 +13,7 @@ class RuleSet {
     this.visibility = RuleSetVisibility.private,
     this.ownerDeviceId,
     this.updatedAt,
+    this.rules,
   });
 
   final String id;
@@ -23,6 +25,7 @@ class RuleSet {
   final RuleSetVisibility visibility;
   final String? ownerDeviceId;
   final DateTime? updatedAt;
+  final RuleSetRules? rules;
 
   bool get isPublic => visibility == RuleSetVisibility.public;
 }

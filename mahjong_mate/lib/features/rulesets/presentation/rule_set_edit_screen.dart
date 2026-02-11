@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:uuid/uuid.dart';
 
 import '../application/rule_sets_provider.dart';
-import '../domain/rule_category.dart';
-import '../domain/rule_item.dart';
 import '../domain/rule_set.dart';
+import '../domain/rule_set_rules.dart';
 import '../domain/rule_set_visibility.dart';
 import '../data/rule_set_repository.dart';
 import '../../../shared/device/device_id_provider.dart';
@@ -24,11 +22,31 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _ownerNameController;
   late final TextEditingController _descriptionController;
+  late final TextEditingController _startingPointsController;
+  late final TextEditingController _returnPointsController;
+  late final TextEditingController _redDoraCountController;
+  late final TextEditingController _umaController;
   bool _initialized = false;
   bool _saving = false;
   RuleSetVisibility _visibility = RuleSetVisibility.private;
-  final Map<RuleCategory, List<_EditableRuleItem>> _itemsByCategory = {};
-  final Uuid _uuid = const Uuid();
+  PlayerCount _players = PlayerCount.four;
+  MatchType _matchType = MatchType.tonnan;
+  BoxTenThreshold _boxTenThreshold = BoxTenThreshold.zero;
+  BoxTenBehavior _boxTenBehavior = BoxTenBehavior.end;
+  KuitanRule _kuitan = KuitanRule.on;
+  SakizukeRule _sakizuke = SakizukeRule.ato;
+  HeadBumpRule _headBump = HeadBumpRule.atama;
+  RenchanRule _renchan = RenchanRule.oyaTenpai;
+  OorasuStopRule _oorasuStop = OorasuStopRule.on;
+  GoRenchanTwoHanRule _goRenchanTwoHan = GoRenchanTwoHanRule.off;
+  DoraRule _kandora = DoraRule.on;
+  DoraRule _uradora = DoraRule.on;
+  bool _redDoraEnabled = true;
+  final Set<SpecialDora> _specialDora = {};
+  RiichiStickRule _riichiStick = RiichiStickRule.topTake;
+  bool _yakumanMultiple = true;
+  bool _yakumanDouble = true;
+  bool _threeNorthNuki = true;
 
   @override
   void initState() {
@@ -36,6 +54,10 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
     _nameController = TextEditingController();
     _ownerNameController = TextEditingController();
     _descriptionController = TextEditingController();
+    _startingPointsController = TextEditingController(text: '25000');
+    _returnPointsController = TextEditingController(text: '30000');
+    _redDoraCountController = TextEditingController(text: '3');
+    _umaController = TextEditingController(text: '20-10');
   }
 
   @override
@@ -43,6 +65,10 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
     _nameController.dispose();
     _ownerNameController.dispose();
     _descriptionController.dispose();
+    _startingPointsController.dispose();
+    _returnPointsController.dispose();
+    _redDoraCountController.dispose();
+    _umaController.dispose();
     super.dispose();
   }
 
@@ -58,17 +84,32 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
       _ownerNameController.text = ruleSet.ownerName;
       _descriptionController.text = ruleSet.description;
       _visibility = ruleSet.visibility;
-      _itemsByCategory.clear();
-      for (final item in ruleSet.items) {
-        _itemsByCategory.putIfAbsent(item.category, () => []).add(
-          _EditableRuleItem(
-            id: item.id,
-            category: item.category,
-            title: item.title,
-            description: item.description,
-            priority: item.priority,
-          ),
-        );
+      final rules = ruleSet.rules;
+      if (rules != null) {
+        _players = rules.players;
+        _matchType = rules.matchType;
+        _startingPointsController.text = rules.startingPoints.toString();
+        _returnPointsController.text = rules.score.returnPoints.toString();
+        _boxTenThreshold = rules.boxTenThreshold;
+        _boxTenBehavior = rules.boxTenBehavior;
+        _kuitan = rules.kuitan;
+        _sakizuke = rules.sakizuke;
+        _headBump = rules.headBump;
+        _renchan = rules.renchan;
+        _oorasuStop = rules.oorasuStop;
+        _goRenchanTwoHan = rules.goRenchanTwoHan;
+        _kandora = rules.kandora;
+        _uradora = rules.uradora;
+        _redDoraEnabled = rules.redDora.enabled;
+        _redDoraCountController.text = rules.redDora.count.toString();
+        _specialDora
+          ..clear()
+          ..addAll(rules.specialDora);
+        _umaController.text = rules.score.uma;
+        _riichiStick = rules.score.riichiStick;
+        _yakumanMultiple = rules.yakuman.allowMultiple;
+        _yakumanDouble = rules.yakuman.allowDouble;
+        _threeNorthNuki = rules.threePlayer?.northNuki ?? true;
       }
       if (mounted) {
         setState(() {});
@@ -152,51 +193,285 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text('カテゴリ別ルール', style: Theme.of(context).textTheme.titleLarge),
+          Text('対局形式・参加人数', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
-          ...RuleCategory.values.map(
-            (category) => Card(
-              margin: const EdgeInsets.only(bottom: 12),
-              child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(category.label, style: Theme.of(context).textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    if (_itemsFor(category).isEmpty)
-                      Text(
-                        'このカテゴリのルールを追加してください。',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      )
-                    else
-                      ..._itemsFor(category).map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _RuleItemTile(
-                            title: item.title,
-                            description: item.description,
-                            onDelete: () => _removeRuleItem(category, item),
-                            onEdit: () => _showRuleItemDialog(
-                              context,
-                              category,
-                              existing: item,
-                            ),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _showRuleItemDialog(context, category),
-                        icon: const Icon(Icons.add),
-                        label: const Text('ルールを追加'),
-                      ),
-                    ),
-                  ],
+          _RuleCard(
+            title: '対局人数',
+            child: _SegmentedPicker<PlayerCount>(
+              value: _players,
+              options: const {
+                PlayerCount.four: '4人',
+                PlayerCount.three: '3人',
+              },
+              onChanged: (value) {
+                setState(() {
+                  _players = value;
+                  _applyDefaultPointsForPlayers();
+                });
+              },
+            ),
+          ),
+          _RuleCard(
+            title: '対局形式',
+            child: _SegmentedPicker<MatchType>(
+              value: _matchType,
+              options: const {
+                MatchType.tonpuu: '東風',
+                MatchType.tonnan: '東南',
+                MatchType.isshou: '一荘',
+              },
+              onChanged: (value) => setState(() => _matchType = value),
+            ),
+          ),
+          _RuleCard(
+            title: '持ち点',
+            child: TextField(
+              controller: _startingPointsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(suffixText: '点'),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          _RuleCard(
+            title: '返し点',
+            child: TextField(
+              controller: _returnPointsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(suffixText: '点'),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+          _RuleCard(
+            title: 'オカ（自動計算）',
+            child: Text(
+              '${_calcOka()}点',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('進行ルール（局の進行）', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          _RuleCard(
+            title: '食いタン',
+            child: _SegmentedPicker<KuitanRule>(
+              value: _kuitan,
+              options: const {
+                KuitanRule.on: 'あり',
+                KuitanRule.off: 'なし',
+              },
+              onChanged: (value) => setState(() => _kuitan = value),
+            ),
+          ),
+          _RuleCard(
+            title: '先付け',
+            child: DropdownButtonFormField<SakizukeRule>(
+              value: _sakizuke,
+              items: const [
+                DropdownMenuItem(value: SakizukeRule.complete, child: Text('完全先付け')),
+                DropdownMenuItem(value: SakizukeRule.ato, child: Text('後付け')),
+                DropdownMenuItem(value: SakizukeRule.naka, child: Text('中付け（レア）')),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _sakizuke = value);
+              },
+            ),
+          ),
+          _RuleCard(
+            title: '頭ハネ / ダブロン',
+            child: _SegmentedPicker<HeadBumpRule>(
+              value: _headBump,
+              options: const {
+                HeadBumpRule.atama: '頭ハネ',
+                HeadBumpRule.daburon: 'ダブロン',
+              },
+              onChanged: (value) => setState(() => _headBump = value),
+            ),
+          ),
+          _RuleCard(
+            title: '連荘条件',
+            child: _SegmentedPicker<RenchanRule>(
+              value: _renchan,
+              options: const {
+                RenchanRule.oyaTenpai: '親テンパイ連荘',
+                RenchanRule.oyaRyuukyoku: '親流局連荘',
+              },
+              onChanged: (value) => setState(() => _renchan = value),
+            ),
+          ),
+          _RuleCard(
+            title: '5本場以上2翻縛り',
+            child: _SegmentedPicker<GoRenchanTwoHanRule>(
+              value: _goRenchanTwoHan,
+              options: const {
+                GoRenchanTwoHanRule.on: 'あり',
+                GoRenchanTwoHanRule.off: 'なし',
+              },
+              onChanged: (value) => setState(() => _goRenchanTwoHan = value),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('ゲーム終了条件', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          _RuleCard(
+            title: '箱テン判定',
+            child: _SegmentedPicker<BoxTenThreshold>(
+              value: _boxTenThreshold,
+              options: const {
+                BoxTenThreshold.zero: '0点以下の時点',
+                BoxTenThreshold.minus: 'マイナス時点',
+              },
+              onChanged: (value) => setState(() => _boxTenThreshold = value),
+            ),
+          ),
+          _RuleCard(
+            title: '箱テン後の扱い',
+            child: _SegmentedPicker<BoxTenBehavior>(
+              value: _boxTenBehavior,
+              options: const {
+                BoxTenBehavior.end: '終了',
+                BoxTenBehavior.continuePlay: '続行',
+              },
+              onChanged: (value) => setState(() => _boxTenBehavior = value),
+            ),
+          ),
+          _RuleCard(
+            title: 'オーラス止め',
+            child: _SegmentedPicker<OorasuStopRule>(
+              value: _oorasuStop,
+              options: const {
+                OorasuStopRule.on: 'あり',
+                OorasuStopRule.off: 'なし',
+              },
+              onChanged: (value) => setState(() => _oorasuStop = value),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('ドラ設定', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          _RuleCard(
+            title: 'カンドラ',
+            child: _SegmentedPicker<DoraRule>(
+              value: _kandora,
+              options: const {
+                DoraRule.on: 'あり',
+                DoraRule.off: 'なし',
+              },
+              onChanged: (value) => setState(() => _kandora = value),
+            ),
+          ),
+          _RuleCard(
+            title: '裏ドラ',
+            child: _SegmentedPicker<DoraRule>(
+              value: _uradora,
+              options: const {
+                DoraRule.on: 'あり',
+                DoraRule.off: 'なし',
+              },
+              onChanged: (value) => setState(() => _uradora = value),
+            ),
+          ),
+          _RuleCard(
+            title: '赤ドラ',
+            child: Row(
+              children: [
+                Switch(
+                  value: _redDoraEnabled,
+                  onChanged: (value) => setState(() => _redDoraEnabled = value),
                 ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _redDoraCountController,
+                    enabled: _redDoraEnabled,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '枚数'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _RuleCard(
+            title: '特殊ドラ',
+            child: Column(
+              children: SpecialDora.values.map((dora) {
+                final label = switch (dora) {
+                  SpecialDora.gold => '金ドラ',
+                  SpecialDora.hana => '花牌',
+                  SpecialDora.nuki => '抜きドラ',
+                };
+                return CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(label),
+                  value: _specialDora.contains(dora),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value == true) {
+                        _specialDora.add(dora);
+                      } else {
+                        _specialDora.remove(dora);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          if (_players == PlayerCount.three)
+            _RuleCard(
+              title: '北抜き',
+              child: _SegmentedPicker<bool>(
+                value: _threeNorthNuki,
+                options: const {
+                  true: 'あり',
+                  false: 'なし',
+                },
+                onChanged: (value) => setState(() => _threeNorthNuki = value),
               ),
+            ),
+          const SizedBox(height: 20),
+          Text('得点配分（精算）', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          _RuleCard(
+            title: 'ウマ',
+            child: TextField(
+              controller: _umaController,
+              decoration: const InputDecoration(
+                hintText: '例: 20-10',
+              ),
+            ),
+          ),
+          _RuleCard(
+            title: 'リーチ棒の扱い',
+            child: _SegmentedPicker<RiichiStickRule>(
+              value: _riichiStick,
+              options: const {
+                RiichiStickRule.topTake: 'トップ総取り',
+                RiichiStickRule.split: '分配',
+              },
+              onChanged: (value) => setState(() => _riichiStick = value),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('役満・特殊扱い', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          _RuleCard(
+            title: '役満の扱い',
+            child: Column(
+              children: [
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('複合役満を認める'),
+                  value: _yakumanMultiple,
+                  onChanged: (value) => setState(() => _yakumanMultiple = value),
+                ),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('ダブル役満を認める'),
+                  value: _yakumanDouble,
+                  onChanged: (value) => setState(() => _yakumanDouble = value),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
@@ -207,80 +482,6 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
         ],
       ),
     );
-  }
-
-  List<_EditableRuleItem> _itemsFor(RuleCategory category) {
-    return _itemsByCategory[category] ?? const [];
-  }
-
-  void _removeRuleItem(RuleCategory category, _EditableRuleItem item) {
-    setState(() {
-      _itemsByCategory[category]?.removeWhere((entry) => entry.id == item.id);
-    });
-  }
-
-  Future<void> _showRuleItemDialog(
-    BuildContext context,
-    RuleCategory category, {
-    _EditableRuleItem? existing,
-  }) async {
-    final titleController = TextEditingController(text: existing?.title ?? '');
-    final descriptionController = TextEditingController(text: existing?.description ?? '');
-    final result = await showDialog<_EditableRuleItem>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(existing == null ? 'ルールを追加' : 'ルールを編集'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              decoration: const InputDecoration(labelText: 'ルール名'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: descriptionController,
-              decoration: const InputDecoration(labelText: '説明'),
-              maxLines: 3,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('キャンセル'),
-          ),
-          FilledButton(
-            onPressed: () {
-              final title = titleController.text.trim();
-              final description = descriptionController.text.trim();
-              if (title.isEmpty) return;
-              Navigator.of(context).pop(
-                _EditableRuleItem(
-                  id: existing?.id ?? _uuid.v4(),
-                  category: category,
-                  title: title,
-                  description: description,
-                  priority: existing?.priority ?? 0,
-                ),
-              );
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == null) return;
-    setState(() {
-      final list = _itemsByCategory.putIfAbsent(category, () => []);
-      final index = list.indexWhere((entry) => entry.id == result.id);
-      if (index == -1) {
-        list.add(result);
-      } else {
-        list[index] = result;
-      }
-    });
   }
 
   Future<void> _save(RuleSet? ruleSet) async {
@@ -303,15 +504,50 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           : _ownerNameController.text.trim();
       final deviceId = await ref.read(deviceIdProvider.future);
       final repository = ref.read(ruleSetRepositoryProvider);
-      final items = _itemsByCategory.values.expand((list) => list).map((item) {
-        return RuleItem(
-          id: item.id,
-          category: item.category,
-          title: item.title,
-          description: item.description,
-          priority: item.priority,
-        );
-      }).toList();
+      final startingPoints =
+          int.tryParse(_startingPointsController.text.trim()) ?? 25000;
+      final returnPoints =
+          int.tryParse(_returnPointsController.text.trim()) ?? 30000;
+      final redDoraCount =
+          int.tryParse(_redDoraCountController.text.trim()) ?? 0;
+      final uma = _umaController.text.trim().isEmpty
+          ? '20-10'
+          : _umaController.text.trim();
+      final players = _players == PlayerCount.three ? 3 : 4;
+      final oka = (returnPoints - startingPoints) * players;
+
+      final rules = RuleSetRules(
+        players: _players,
+        matchType: _matchType,
+        startingPoints: startingPoints,
+        boxTenThreshold: _boxTenThreshold,
+        boxTenBehavior: _boxTenBehavior,
+        kuitan: _kuitan,
+        sakizuke: _sakizuke,
+        headBump: _headBump,
+        renchan: _renchan,
+        oorasuStop: _oorasuStop,
+        goRenchanTwoHan: _goRenchanTwoHan,
+        kandora: _kandora,
+        uradora: _uradora,
+        redDora: RedDoraRule(
+          enabled: _redDoraEnabled,
+          count: _redDoraEnabled ? redDoraCount : 0,
+        ),
+        specialDora: _specialDora.toList(),
+        score: ScoreRules(
+          oka: oka,
+          returnPoints: returnPoints,
+          uma: uma,
+          riichiStick: _riichiStick,
+        ),
+        yakuman: YakumanRules(
+          allowMultiple: _yakumanMultiple,
+          allowDouble: _yakumanDouble,
+        ),
+        threePlayer:
+            _players == PlayerCount.three ? ThreePlayerRules(northNuki: _threeNorthNuki) : null,
+      );
 
       if (ruleSet == null) {
         final created = await repository.createRuleSet(
@@ -320,7 +556,8 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           ownerName: ownerName,
           ownerDeviceId: deviceId,
           visibility: _visibility,
-          items: items,
+          items: const [],
+          rules: rules,
         );
         if (!mounted) return;
         context.goNamed(
@@ -335,8 +572,9 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           ownerName: ownerName,
           ownerDeviceId: ruleSet.ownerDeviceId ?? deviceId,
           visibility: _visibility,
-          items: items,
+          items: ruleSet.items,
           shareCode: ruleSet.shareCode,
+          rules: rules,
         );
         if (!mounted) return;
         context.goNamed(
@@ -357,51 +595,79 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
       }
     }
   }
+
+  int _calcOka() {
+    final startingPoints =
+        int.tryParse(_startingPointsController.text.trim()) ?? 25000;
+    final returnPoints =
+        int.tryParse(_returnPointsController.text.trim()) ?? 30000;
+    final players = _players == PlayerCount.three ? 3 : 4;
+    return (returnPoints - startingPoints) * players;
+  }
+
+  void _applyDefaultPointsForPlayers() {
+    if (_players == PlayerCount.three) {
+      _startingPointsController.text = '35000';
+      _returnPointsController.text = '40000';
+    } else {
+      _startingPointsController.text = '25000';
+      _returnPointsController.text = '30000';
+    }
+  }
 }
 
-class _EditableRuleItem {
-  _EditableRuleItem({
-    required this.id,
-    required this.category,
-    required this.title,
-    required this.description,
-    required this.priority,
-  });
-
-  final String id;
-  final RuleCategory category;
-  final String title;
-  final String description;
-  final int priority;
-}
-
-class _RuleItemTile extends StatelessWidget {
-  const _RuleItemTile({
-    required this.title,
-    required this.description,
-    required this.onDelete,
-    required this.onEdit,
-  });
+class _RuleCard extends StatelessWidget {
+  const _RuleCard({required this.title, required this.child});
 
   final String title;
-  final String description;
-  final VoidCallback onDelete;
-  final VoidCallback onEdit;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: EdgeInsets.zero,
-      child: ListTile(
-        title: Text(title),
-        subtitle: description.isEmpty ? null : Text(description),
-        onTap: onEdit,
-        trailing: IconButton(
-          onPressed: onDelete,
-          icon: const Icon(Icons.delete_outline),
-          tooltip: '削除',
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            child,
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _SegmentedPicker<T> extends StatelessWidget {
+  const _SegmentedPicker({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  final T value;
+  final Map<T, String> options;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return SegmentedButton<T>(
+      segments: options.entries
+          .map(
+            (entry) => ButtonSegment<T>(
+              value: entry.key,
+              label: Text(entry.value),
+            ),
+          )
+          .toList(),
+      selected: {value},
+      showSelectedIcon: false,
+      onSelectionChanged: (selection) {
+        onChanged(selection.first);
+      },
     );
   }
 }

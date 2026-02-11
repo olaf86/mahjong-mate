@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../application/rule_sets_provider.dart';
 import '../domain/rule_category.dart';
 import '../domain/rule_item.dart';
+import '../domain/rule_set_rules.dart';
 
 class RuleSetDetailScreen extends ConsumerWidget {
   const RuleSetDetailScreen({super.key, required this.ruleSetId});
@@ -60,10 +61,13 @@ class RuleSetDetailScreen extends ConsumerWidget {
                 isPublic: ruleSet.isPublic,
               ),
               const SizedBox(height: 16),
-              ...RuleCategory.values.map((category) {
-                final items = grouped[category] ?? const [];
-                return _CategorySection(category: category, items: items);
-              }),
+              if (ruleSet.rules != null)
+                _RuleSummarySection(rules: ruleSet.rules!)
+              else
+                ...RuleCategory.values.map((category) {
+                  final items = grouped[category] ?? const [];
+                  return _CategorySection(category: category, items: items);
+                }),
             ],
           ),
         );
@@ -217,4 +221,170 @@ class _CategorySection extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RuleSummarySection extends StatelessWidget {
+  const _RuleSummarySection({required this.rules});
+
+  final RuleSetRules rules;
+
+  @override
+  Widget build(BuildContext context) {
+    final lines = <_RuleLine>[
+      _RuleLine('対局人数', rules.players == PlayerCount.four ? '4人' : '3人'),
+      _RuleLine(
+        '対局形式',
+        switch (rules.matchType) {
+          MatchType.tonpuu => '東風',
+          MatchType.tonnan => '東南',
+          MatchType.isshou => '一荘',
+        },
+      ),
+      _RuleLine('持ち点', '${rules.startingPoints}点'),
+      _RuleLine('返し点', '${rules.score.returnPoints}点'),
+      _RuleLine('オカ', '${rules.score.oka}点'),
+      _RuleLine(
+        '箱テン判定',
+        rules.boxTenThreshold == BoxTenThreshold.zero ? '0点以下の時点' : 'マイナス時点',
+      ),
+      _RuleLine(
+        '箱テン後の扱い',
+        rules.boxTenBehavior == BoxTenBehavior.end ? '終了' : '続行',
+      ),
+      _RuleLine('食いタン', rules.kuitan == KuitanRule.on ? 'あり' : 'なし'),
+      _RuleLine(
+        '先付け',
+        switch (rules.sakizuke) {
+          SakizukeRule.complete => '完全先付け',
+          SakizukeRule.ato => '後付け',
+          SakizukeRule.naka => '中付け',
+        },
+      ),
+      _RuleLine(
+        '頭ハネ/ダブロン',
+        rules.headBump == HeadBumpRule.atama ? '頭ハネ' : 'ダブロン',
+      ),
+      _RuleLine(
+        '連荘条件',
+        rules.renchan == RenchanRule.oyaTenpai ? '親テンパイ' : '親流局',
+      ),
+      _RuleLine('オーラス止め', rules.oorasuStop == OorasuStopRule.on ? 'あり' : 'なし'),
+      _RuleLine(
+        '5本場以上2翻縛り',
+        rules.goRenchanTwoHan == GoRenchanTwoHanRule.on ? 'あり' : 'なし',
+      ),
+    ];
+
+    final doraLines = <_RuleLine>[
+      _RuleLine('カンドラ', rules.kandora == DoraRule.on ? 'あり' : 'なし'),
+      _RuleLine('裏ドラ', rules.uradora == DoraRule.on ? 'あり' : 'なし'),
+      _RuleLine(
+        '赤ドラ',
+        rules.redDora.enabled ? 'あり (${rules.redDora.count}枚)' : 'なし',
+      ),
+      _RuleLine(
+        '特殊ドラ',
+        rules.specialDora.isEmpty
+            ? 'なし'
+            : rules.specialDora.map((d) {
+                switch (d) {
+                  case SpecialDora.gold:
+                    return '金ドラ';
+                  case SpecialDora.hana:
+                    return '花牌';
+                  case SpecialDora.nuki:
+                    return '抜きドラ';
+                }
+              }).join(' / '),
+      ),
+      if (rules.players == PlayerCount.three)
+        _RuleLine(
+          '北抜き',
+          (rules.threePlayer?.northNuki ?? false) ? 'あり' : 'なし',
+        ),
+    ];
+
+    final scoreLines = <_RuleLine>[
+      _RuleLine('ウマ', rules.score.uma),
+      _RuleLine(
+        'リーチ棒',
+        rules.score.riichiStick == RiichiStickRule.topTake ? 'トップ総取り' : '分配',
+      ),
+    ];
+
+    final advancedLines = <_RuleLine>[
+      _RuleLine('複合役満', rules.yakuman.allowMultiple ? 'あり' : 'なし'),
+      _RuleLine('ダブル役満', rules.yakuman.allowDouble ? 'あり' : 'なし'),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _RuleSummaryGroup(title: '基本ルール', lines: lines),
+        const SizedBox(height: 16),
+        _RuleSummaryGroup(title: 'ドラ設定', lines: doraLines),
+        const SizedBox(height: 16),
+        _RuleSummaryGroup(title: '得点配分（精算）', lines: scoreLines),
+        const SizedBox(height: 16),
+        _RuleSummaryGroup(title: '役満・特殊扱い', lines: advancedLines),
+      ],
+    );
+  }
+}
+
+class _RuleSummaryGroup extends StatelessWidget {
+  const _RuleSummaryGroup({required this.title, required this.lines});
+
+  final String title;
+  final List<_RuleLine> lines;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 8),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            mainAxisExtent: 86,
+          ),
+          itemCount: lines.length,
+          itemBuilder: (context, index) {
+            final line = lines[index];
+            return Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(line.label, style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: 6),
+                    Text(
+                      line.value,
+                      style: Theme.of(context).textTheme.titleMedium,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _RuleLine {
+  const _RuleLine(this.label, this.value);
+
+  final String label;
+  final String value;
 }

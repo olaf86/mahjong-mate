@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../domain/rule_category.dart';
 import '../domain/rule_item.dart';
 import '../domain/rule_set.dart';
+import '../domain/rule_set_rules.dart';
 import '../domain/rule_set_visibility.dart';
 
 class RuleSetRepository {
@@ -37,6 +38,7 @@ class RuleSetRepository {
     required String ownerDeviceId,
     required RuleSetVisibility visibility,
     required List<RuleItem> items,
+    RuleSetRules? rules,
   }) async {
     final doc = _collection.doc();
     final shareCode = _ensureShareCode(visibility: visibility, existing: null);
@@ -51,6 +53,7 @@ class RuleSetRepository {
       'visibility': visibility.name,
       'updatedAt': FieldValue.serverTimestamp(),
       'items': items.map(_itemToMap).toList(),
+      if (rules != null) 'rules': rules.toMap(),
     });
 
     return RuleSet(
@@ -63,6 +66,7 @@ class RuleSetRepository {
       visibility: visibility,
       updatedAt: now,
       items: items,
+      rules: rules,
     );
   }
 
@@ -75,10 +79,11 @@ class RuleSetRepository {
     required RuleSetVisibility visibility,
     required List<RuleItem> items,
     required String? shareCode,
+    RuleSetRules? rules,
   }) async {
     final doc = _collection.doc(id);
     final nextShareCode = _ensureShareCode(visibility: visibility, existing: shareCode);
-    await doc.update({
+    final updatePayload = <String, dynamic>{
       'name': name,
       'description': description,
       'ownerName': ownerName,
@@ -87,7 +92,11 @@ class RuleSetRepository {
       'visibility': visibility.name,
       'updatedAt': FieldValue.serverTimestamp(),
       'items': items.map(_itemToMap).toList(),
-    });
+    };
+    if (rules != null) {
+      updatePayload['rules'] = rules.toMap();
+    }
+    await doc.update(updatePayload);
   }
 
   List<RuleSet> _mapQuery(QuerySnapshot<Map<String, dynamic>> snapshot) {
@@ -124,6 +133,7 @@ class RuleSetRepository {
       visibility: _parseVisibility(data['visibility']),
       updatedAt: _parseTimestamp(data['updatedAt']),
       items: items,
+      rules: RuleSetRules.fromMap(data['rules']),
     );
   }
 
