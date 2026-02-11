@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter/services.dart';
 
 import '../application/rule_sets_provider.dart';
 import '../domain/rule_category.dart';
 import '../domain/rule_item.dart';
 import '../domain/rule_set_rules.dart';
+import '../domain/share_code.dart';
 
 class RuleSetDetailScreen extends ConsumerWidget {
   const RuleSetDetailScreen({super.key, required this.ruleSetId});
@@ -93,6 +97,7 @@ class _HeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final shareUrl = shareCode == null ? null : shareUrlFor(shareCode!);
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -130,6 +135,11 @@ class _HeaderCard extends StatelessWidget {
                     const Icon(Icons.share, size: 18),
                     const SizedBox(width: 6),
                     Text('共有コード $shareCode'),
+                    const SizedBox(width: 8),
+                    TextButton(
+                      onPressed: () => _openShareSheet(context, shareCode!, shareUrl!),
+                      child: const Text('共有'),
+                    ),
                   ],
                 ),
               if (isPublic)
@@ -144,6 +154,106 @@ class _HeaderCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _openShareSheet(BuildContext context, String shareCode, String shareUrl) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('共有', style: Theme.of(context).textTheme.titleLarge),
+              const SizedBox(height: 12),
+              _ShareRow(
+                label: '共有コード',
+                value: shareCode,
+                onCopy: () => _copyText(context, shareCode),
+              ),
+              const SizedBox(height: 8),
+              _ShareRow(
+                label: '共有URL',
+                value: shareUrl,
+                onCopy: () => _copyText(context, shareUrl),
+                onShare: () => Share.share(shareUrl),
+              ),
+              const SizedBox(height: 16),
+              Center(
+                child: QrImageView(
+                  data: shareUrl,
+                  size: 160,
+                  backgroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _copyText(BuildContext context, String value) async {
+    await Clipboard.setData(ClipboardData(text: value));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('コピーしました')),
+    );
+  }
+}
+
+class _ShareRow extends StatelessWidget {
+  const _ShareRow({
+    required this.label,
+    required this.value,
+    required this.onCopy,
+    this.onShare,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback onCopy;
+  final VoidCallback? onShare;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: Theme.of(context).textTheme.labelSmall),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              onPressed: onCopy,
+              icon: const Icon(Icons.copy, size: 18),
+              tooltip: 'コピー',
+            ),
+            if (onShare != null)
+              IconButton(
+                onPressed: onShare,
+                icon: const Icon(Icons.ios_share, size: 18),
+                tooltip: '共有',
+              ),
+          ],
+        ),
       ),
     );
   }

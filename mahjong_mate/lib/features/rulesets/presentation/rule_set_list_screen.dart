@@ -6,6 +6,7 @@ import '../application/rule_sets_provider.dart';
 import '../domain/rule_category.dart';
 import '../domain/rule_set.dart';
 import '../domain/rule_set_rules.dart';
+import '../domain/share_code.dart';
 
 class RuleSetListScreen extends ConsumerWidget {
   const RuleSetListScreen({super.key});
@@ -38,6 +39,12 @@ class RuleSetListScreen extends ConsumerWidget {
                 'メインコミュニティの採用ルールと役の解釈を、いつでも最新版で共有できます。',
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
+              const SizedBox(height: 14),
+              OutlinedButton.icon(
+                onPressed: () => _openShareCodeDialog(context),
+                icon: const Icon(Icons.key),
+                label: const Text('共有コードで開く'),
+              ),
               const SizedBox(height: 24),
               if (items.isEmpty)
                 const _EmptyState()
@@ -48,6 +55,46 @@ class RuleSetListScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _openShareCodeDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('共有コードで開く'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: '例: MJM-AB12',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final code = controller.text.trim();
+                Navigator.of(context).pop(code);
+              },
+              child: const Text('開く'),
+            ),
+          ],
+        );
+      },
+    );
+    if (result == null || result.trim().isEmpty) {
+      return;
+    }
+    final normalized = normalizeShareCode(result);
+    if (normalized.isEmpty) {
+      return;
+    }
+    if (!context.mounted) return;
+    context.go('/r/$normalized');
   }
 }
 
@@ -297,6 +344,7 @@ class _RuleSetCard extends StatelessWidget {
   String _normalizeUma(String value) {
     return value.replaceAll(' ', '').trim();
   }
+
 }
 
 class _MiniTag extends StatelessWidget {

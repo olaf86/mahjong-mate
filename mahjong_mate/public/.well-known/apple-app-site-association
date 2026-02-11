@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "48C76HC76Y.com.example.mahjong-mate",
+        "paths": ["/r/*"]
+      }
+    ]
+  }
+}

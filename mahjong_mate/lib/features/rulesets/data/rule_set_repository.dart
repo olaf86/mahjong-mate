@@ -31,6 +31,15 @@ class RuleSetRepository {
     return _mergeStreams(publicStream, ownedStream);
   }
 
+  Future<RuleSet?> fetchRuleSetByShareCode(String shareCode) async {
+    final snapshot =
+        await _collection.where('shareCode', isEqualTo: shareCode).limit(1).get();
+    if (snapshot.docs.isEmpty) {
+      return null;
+    }
+    return _mapDoc(snapshot.docs.first);
+  }
+
   Future<RuleSet> createRuleSet({
     required String name,
     required String description,

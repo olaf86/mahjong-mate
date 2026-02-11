@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/device/device_id_provider.dart';
 import '../data/rule_set_repository.dart';
 import '../domain/rule_set.dart';
+import '../domain/share_code.dart';
 
 final ruleSetRepositoryProvider = Provider<RuleSetRepository>((ref) {
   return RuleSetRepository(FirebaseFirestore.instance);
@@ -25,4 +26,13 @@ final ruleSetByIdProvider = Provider.family<AsyncValue<RuleSet?>, String>((ref, 
     }
     return null;
   });
+});
+
+final ruleSetByShareCodeProvider = FutureProvider.family<RuleSet?, String>((ref, code) async {
+  final normalized = normalizeShareCode(code);
+  if (normalized.isEmpty) {
+    return null;
+  }
+  final repository = ref.watch(ruleSetRepositoryProvider);
+  return repository.fetchRuleSetByShareCode(normalized);
 });

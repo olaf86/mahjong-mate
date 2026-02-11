@@ -3,10 +3,18 @@ import 'package:go_router/go_router.dart';
 import '../features/rulesets/presentation/rule_set_detail_screen.dart';
 import '../features/rulesets/presentation/rule_set_edit_screen.dart';
 import '../features/rulesets/presentation/rule_set_list_screen.dart';
+import '../features/rulesets/presentation/rule_set_share_resolver_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [
+    GoRoute(
+      path: '/r/:code',
+      name: 'ruleset-share',
+      builder: (context, state) => RuleSetShareResolverScreen(
+        shareCode: state.pathParameters['code'] ?? '',
+      ),
+    ),
     GoRoute(
       path: '/',
       name: 'ruleset-list',

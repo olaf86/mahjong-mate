@@ -15,6 +15,7 @@ ios/Runner/GoogleService-Info.plist
 .svn/
 .swiftpm/
 migrate_working_dir/
+.firebase/
 
 # IntelliJ related
 *.iml
