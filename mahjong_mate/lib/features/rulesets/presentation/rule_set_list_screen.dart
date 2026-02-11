@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../application/rule_sets_provider.dart';
 import '../domain/rule_category.dart';
 import '../domain/rule_set.dart';
+import '../domain/rule_set_rules.dart';
 
 class RuleSetListScreen extends ConsumerWidget {
   const RuleSetListScreen({super.key});
@@ -61,6 +62,8 @@ class _RuleSetCard extends StatelessWidget {
     for (final item in ruleSet.items) {
       categoryCounts[item.category] = (categoryCounts[item.category] ?? 0) + 1;
     }
+    final rules = ruleSet.rules;
+    final tiles = rules == null ? null : _buildRuleTiles(rules);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -91,14 +94,22 @@ class _RuleSetCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(ruleSet.description),
                 const SizedBox(height: 12),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: RuleCategory.values.map((category) {
-                    final count = categoryCounts[category] ?? 0;
-                    return Chip(label: Text('${category.label} $count'));
-                  }).toList(),
-                ),
+                if (tiles == null)
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: RuleCategory.values.map((category) {
+                      final count = categoryCounts[category] ?? 0;
+                      return _MiniTag(label: '${category.label} $count');
+                    }).toList(),
+                  )
+                else
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: tiles.map((tile) => _RuleTile(tile: tile)).toList(),
+                  ),
                 const SizedBox(height: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,6 +139,250 @@ class _RuleSetCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  List<_RuleTileData> _buildRuleTiles(RuleSetRules rules) {
+    final tiles = <_RuleTileData>[];
+    final isThreePlayer = rules.players == PlayerCount.three;
+    final standardStarting = isThreePlayer ? 35000 : 25000;
+    final standardReturn = isThreePlayer ? 40000 : 30000;
+    final standardOka = (standardReturn - standardStarting) * (isThreePlayer ? 3 : 4);
+
+    tiles.addAll([
+      _RuleTileData(
+        label: '人数',
+        value: rules.players == PlayerCount.four ? '4人' : '3人',
+        isStandard: rules.players == PlayerCount.four,
+      ),
+      _RuleTileData(
+        label: '形式',
+        value: _matchTypeLabel(rules.matchType),
+        isStandard: rules.matchType == MatchType.tonnan,
+      ),
+      _RuleTileData(
+        label: '持点',
+        value: '${rules.startingPoints}',
+        isStandard: rules.startingPoints == standardStarting,
+      ),
+      _RuleTileData(
+        label: '返点',
+        value: '${rules.score.returnPoints}',
+        isStandard: rules.score.returnPoints == standardReturn,
+      ),
+      _RuleTileData(
+        label: 'オカ',
+        value: '${_calcOka(rules)}',
+        isStandard: _calcOka(rules) == standardOka,
+      ),
+      _RuleTileData(
+        label: '食ﾀﾝ',
+        value: rules.kuitan == KuitanRule.on ? 'あり' : 'なし',
+        isStandard: rules.kuitan == KuitanRule.on,
+      ),
+      _RuleTileData(
+        label: '先付',
+        value: _sakizukeLabel(rules.sakizuke),
+        isStandard: rules.sakizuke == SakizukeRule.ato,
+      ),
+      _RuleTileData(
+        label: '頭ﾊﾈ',
+        value: rules.headBump == HeadBumpRule.atama ? '頭ハネ' : 'ダブロン',
+        isStandard: rules.headBump == HeadBumpRule.atama,
+      ),
+      _RuleTileData(
+        label: '箱ﾃﾝ',
+        value: rules.boxTenThreshold == BoxTenThreshold.zero ? '0点以下' : 'マイナス',
+        isStandard: rules.boxTenThreshold == BoxTenThreshold.zero,
+      ),
+      _RuleTileData(
+        label: '箱後',
+        value: rules.boxTenBehavior == BoxTenBehavior.end ? '終了' : '続行',
+        isStandard: rules.boxTenBehavior == BoxTenBehavior.end,
+      ),
+      _RuleTileData(
+        label: 'ﾄﾞﾗ',
+        value: _doraLabel(rules),
+        isStandard: rules.kandora == DoraRule.on &&
+            rules.uradora == DoraRule.on &&
+            rules.redDora.enabled &&
+            rules.redDora.count == 3,
+      ),
+      _RuleTileData(
+        label: '特ﾄﾞﾗ',
+        value: _specialDoraLabel(rules.specialDora),
+        isStandard: rules.specialDora.isEmpty,
+      ),
+      if (isThreePlayer)
+        _RuleTileData(
+          label: '北抜',
+          value: rules.threePlayer?.northNuki == true ? 'あり' : 'なし',
+          isStandard: rules.threePlayer?.northNuki == true,
+        ),
+      _RuleTileData(
+        label: 'ｳﾏ',
+        value: rules.score.uma,
+        isStandard: _normalizeUma(rules.score.uma) == '20-10',
+      ),
+      _RuleTileData(
+        label: '立棒',
+        value: rules.score.riichiStick == RiichiStickRule.topTake ? 'トップ' : '均等',
+        isStandard: rules.score.riichiStick == RiichiStickRule.topTake,
+      ),
+      _RuleTileData(
+        label: '5本場2翻',
+        value: rules.goRenchanTwoHan == GoRenchanTwoHanRule.on ? 'あり' : 'なし',
+        isStandard: rules.goRenchanTwoHan == GoRenchanTwoHanRule.off,
+      ),
+      _RuleTileData(
+        label: 'ｵｰﾗｽ止',
+        value: rules.oorasuStop == OorasuStopRule.on ? 'あり' : 'なし',
+        isStandard: rules.oorasuStop == OorasuStopRule.on,
+      ),
+    ]);
+
+    return tiles;
+  }
+
+  String _matchTypeLabel(MatchType type) {
+    switch (type) {
+      case MatchType.tonpuu:
+        return '東風';
+      case MatchType.tonnan:
+        return '東南';
+      case MatchType.isshou:
+        return '一荘';
+    }
+  }
+
+  String _sakizukeLabel(SakizukeRule rule) {
+    switch (rule) {
+      case SakizukeRule.complete:
+        return '完全';
+      case SakizukeRule.ato:
+        return '後付け';
+      case SakizukeRule.naka:
+        return '中付け';
+    }
+  }
+
+  String _doraLabel(RuleSetRules rules) {
+    final kandora = rules.kandora == DoraRule.on ? '槓○' : '槓×';
+    final uradora = rules.uradora == DoraRule.on ? '裏○' : '裏×';
+    final red = rules.redDora.enabled ? '赤${rules.redDora.count}' : '赤×';
+    return '$kandora$uradora$red';
+  }
+
+  String _specialDoraLabel(List<SpecialDora> items) {
+    if (items.isEmpty) return 'なし';
+    final labels = items.map((item) {
+      switch (item) {
+        case SpecialDora.gold:
+          return '金';
+        case SpecialDora.hana:
+          return '花';
+        case SpecialDora.nuki:
+          return '抜き';
+      }
+    }).toList();
+    return labels.join('・');
+  }
+
+  int _calcOka(RuleSetRules rules) {
+    final players = rules.players == PlayerCount.three ? 3 : 4;
+    return (rules.score.returnPoints - rules.startingPoints) * players;
+  }
+
+  String _normalizeUma(String value) {
+    return value.replaceAll(' ', '').trim();
+  }
+}
+
+class _MiniTag extends StatelessWidget {
+  const _MiniTag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEDE3D6),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2D6C8)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: const Color(0xFF3A2F25),
+              fontWeight: FontWeight.w600,
+            ),
+      ),
+    );
+  }
+}
+
+class _RuleTileData {
+  const _RuleTileData({
+    required this.label,
+    required this.value,
+    required this.isStandard,
+  });
+
+  final String label;
+  final String value;
+  final bool isStandard;
+}
+
+class _RuleTile extends StatelessWidget {
+  const _RuleTile({required this.tile});
+
+  final _RuleTileData tile;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = tile.isStandard ? const Color(0xFFE6F0E8) : const Color(0xFFF6EAE1);
+    final border = tile.isStandard ? const Color(0xFFD1E0D5) : const Color(0xFFE6CDBB);
+    final textColor = tile.isStandard ? const Color(0xFF2D3F33) : const Color(0xFF4F3A2A);
+
+    return Container(
+      width: 72,
+      height: 72,
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: border),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            tile.label,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w600,
+                  height: 1.1,
+                ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            tile.value,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: textColor,
+                  fontWeight: FontWeight.w700,
+                  height: 1.1,
+                ),
+          ),
+        ],
       ),
     );
   }
