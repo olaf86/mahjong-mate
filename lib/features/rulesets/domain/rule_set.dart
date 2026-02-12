@@ -12,6 +12,7 @@ class RuleSet {
     this.shareCode,
     this.visibility = RuleSetVisibility.private,
     this.ownerDeviceId,
+    this.ownerUid,
     this.updatedAt,
     this.rules,
   });
@@ -24,6 +25,7 @@ class RuleSet {
   final String? shareCode;
   final RuleSetVisibility visibility;
   final String? ownerDeviceId;
+  final String? ownerUid;
   final DateTime? updatedAt;
   final RuleSetRules? rules;
 

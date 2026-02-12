@@ -28,7 +28,21 @@ class RuleSetListScreen extends ConsumerWidget {
           data: (items) => ListView(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
             children: [
-              Text('Mahjong Mate', style: Theme.of(context).textTheme.labelLarge),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Mahjong Mate',
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => context.pushNamed('settings-owner'),
+                    icon: const Icon(Icons.settings),
+                    tooltip: 'オーナー名',
+                  ),
+                ],
+              ),
               const SizedBox(height: 8),
               Text(
                 'ルールセットを整理して、卓や雀荘へすぐ配信。',

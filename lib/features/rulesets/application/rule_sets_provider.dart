@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/device/device_id_provider.dart';
+import '../../../shared/auth/auth_user_provider.dart';
 import '../data/rule_set_repository.dart';
 import '../domain/rule_set.dart';
 import '../domain/share_code.dart';
@@ -12,8 +13,10 @@ final ruleSetRepositoryProvider = Provider<RuleSetRepository>((ref) {
 
 final ruleSetsProvider = StreamProvider<List<RuleSet>>((ref) async* {
   final deviceId = await ref.watch(deviceIdProvider.future);
+  final ownerUid = await ref.watch(ownerUidProvider.future);
   final repository = ref.watch(ruleSetRepositoryProvider);
-  yield* repository.watchRuleSets(deviceId: deviceId);
+  await repository.migrateOwnerUid(legacyDeviceId: deviceId, ownerUid: ownerUid);
+  yield* repository.watchRuleSets(ownerUid: ownerUid);
 });
 
 final ruleSetByIdProvider = Provider.family<AsyncValue<RuleSet?>, String>((ref, id) {

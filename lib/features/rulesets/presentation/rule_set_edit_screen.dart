@@ -6,8 +6,8 @@ import '../application/rule_sets_provider.dart';
 import '../domain/rule_set.dart';
 import '../domain/rule_set_rules.dart';
 import '../domain/rule_set_visibility.dart';
-import '../data/rule_set_repository.dart';
-import '../../../shared/device/device_id_provider.dart';
+import '../../../shared/auth/auth_user_provider.dart';
+import '../../../shared/profile/owner_name_provider.dart';
 
 class RuleSetEditScreen extends ConsumerStatefulWidget {
   const RuleSetEditScreen({super.key, this.ruleSetId});
@@ -28,6 +28,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   late final TextEditingController _umaController;
   bool _initialized = false;
   bool _saving = false;
+  bool _ownerNameInitialized = false;
   RuleSetVisibility _visibility = RuleSetVisibility.private;
   PlayerCount _players = PlayerCount.four;
   MatchType _matchType = MatchType.tonnan;
@@ -149,6 +150,15 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   }
 
   Widget _buildForm(BuildContext context, String title, RuleSet? ruleSet) {
+    final ownerNameAsync = ref.watch(ownerNameProvider);
+    if (!_ownerNameInitialized && ruleSet == null) {
+      ownerNameAsync.whenData((value) {
+        if (_ownerNameController.text.trim().isEmpty) {
+          _ownerNameController.text = value;
+        }
+        _ownerNameInitialized = true;
+      });
+    }
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -163,7 +173,10 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           const SizedBox(height: 16),
           TextField(
             controller: _ownerNameController,
-            decoration: const InputDecoration(labelText: 'オーナー名'),
+            decoration: const InputDecoration(
+              labelText: 'オーナー名',
+              helperText: '未入力の場合は「あなた」または設定済みの名前が使われます。',
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -499,10 +512,11 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
 
     try {
       final description = _descriptionController.text.trim();
+      final fallbackOwnerName = ref.read(ownerNameProvider).value ?? ownerNameDefaultValue;
       final ownerName = _ownerNameController.text.trim().isEmpty
-          ? 'あなた'
+          ? fallbackOwnerName
           : _ownerNameController.text.trim();
-      final deviceId = await ref.read(deviceIdProvider.future);
+      final ownerUid = await ref.read(ownerUidProvider.future);
       final repository = ref.read(ruleSetRepositoryProvider);
       final startingPoints =
           int.tryParse(_startingPointsController.text.trim()) ?? 25000;
@@ -554,7 +568,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           name: name,
           description: description,
           ownerName: ownerName,
-          ownerDeviceId: deviceId,
+          ownerUid: ownerUid,
           visibility: _visibility,
           items: const [],
           rules: rules,
@@ -570,7 +584,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           name: name,
           description: description,
           ownerName: ownerName,
-          ownerDeviceId: ruleSet.ownerDeviceId ?? deviceId,
+          ownerUid: ruleSet.ownerUid ?? ownerUid,
           visibility: _visibility,
           items: ruleSet.items,
           shareCode: ruleSet.shareCode,

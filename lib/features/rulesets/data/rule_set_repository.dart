@@ -18,17 +18,34 @@ class RuleSetRepository {
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('rule_sets');
 
-  Stream<List<RuleSet>> watchRuleSets({required String deviceId}) {
+  Stream<List<RuleSet>> watchRuleSets({required String ownerUid}) {
     final publicStream = _collection
         .where('visibility', isEqualTo: 'public')
         .snapshots()
         .map(_mapQuery);
     final ownedStream = _collection
-        .where('ownerDeviceId', isEqualTo: deviceId)
+        .where('ownerUid', isEqualTo: ownerUid)
         .snapshots()
         .map(_mapQuery);
 
     return _mergeStreams(publicStream, ownedStream);
+  }
+
+  Future<void> migrateOwnerUid({
+    required String legacyDeviceId,
+    required String ownerUid,
+  }) async {
+    if (legacyDeviceId.isEmpty) return;
+    final snapshot =
+        await _collection.where('ownerDeviceId', isEqualTo: legacyDeviceId).get();
+    if (snapshot.docs.isEmpty) return;
+    final batch = _firestore.batch();
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      if (data['ownerUid'] != null) continue;
+      batch.update(doc.reference, {'ownerUid': ownerUid});
+    }
+    await batch.commit();
   }
 
   Future<RuleSet?> fetchRuleSetByShareCode(String shareCode) async {
@@ -44,7 +61,7 @@ class RuleSetRepository {
     required String name,
     required String description,
     required String ownerName,
-    required String ownerDeviceId,
+    required String ownerUid,
     required RuleSetVisibility visibility,
     required List<RuleItem> items,
     RuleSetRules? rules,
@@ -57,7 +74,8 @@ class RuleSetRepository {
       'name': name,
       'description': description,
       'ownerName': ownerName,
-      'ownerDeviceId': ownerDeviceId,
+      'ownerDeviceId': ownerUid,
+      'ownerUid': ownerUid,
       'shareCode': shareCode,
       'visibility': visibility.name,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -70,7 +88,8 @@ class RuleSetRepository {
       name: name,
       description: description,
       ownerName: ownerName,
-      ownerDeviceId: ownerDeviceId,
+      ownerDeviceId: ownerUid,
+      ownerUid: ownerUid,
       shareCode: shareCode,
       visibility: visibility,
       updatedAt: now,
@@ -84,7 +103,7 @@ class RuleSetRepository {
     required String name,
     required String description,
     required String ownerName,
-    required String ownerDeviceId,
+    required String ownerUid,
     required RuleSetVisibility visibility,
     required List<RuleItem> items,
     required String? shareCode,
@@ -96,7 +115,8 @@ class RuleSetRepository {
       'name': name,
       'description': description,
       'ownerName': ownerName,
-      'ownerDeviceId': ownerDeviceId,
+      'ownerDeviceId': ownerUid,
+      'ownerUid': ownerUid,
       'shareCode': nextShareCode,
       'visibility': visibility.name,
       'updatedAt': FieldValue.serverTimestamp(),
@@ -138,6 +158,7 @@ class RuleSetRepository {
       description: _stringValue(data['description'], fallback: ''),
       ownerName: _stringValue(data['ownerName'], fallback: 'Mahjong Mate'),
       ownerDeviceId: _stringValueOrNull(data['ownerDeviceId']),
+      ownerUid: _stringValueOrNull(data['ownerUid']),
       shareCode: _stringValueOrNull(data['shareCode']),
       visibility: _parseVisibility(data['visibility']),
       updatedAt: _parseTimestamp(data['updatedAt']),

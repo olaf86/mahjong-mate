@@ -4,6 +4,7 @@ import '../features/rulesets/presentation/rule_set_detail_screen.dart';
 import '../features/rulesets/presentation/rule_set_edit_screen.dart';
 import '../features/rulesets/presentation/rule_set_list_screen.dart';
 import '../features/rulesets/presentation/rule_set_share_resolver_screen.dart';
+import '../features/settings/presentation/owner_name_settings_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -14,6 +15,11 @@ final appRouter = GoRouter(
       builder: (context, state) => RuleSetShareResolverScreen(
         shareCode: state.pathParameters['code'] ?? '',
       ),
+    ),
+    GoRoute(
+      path: '/settings/owner',
+      name: 'settings-owner',
+      builder: (context, state) => const OwnerNameSettingsScreen(),
     ),
     GoRoute(
       path: '/',
