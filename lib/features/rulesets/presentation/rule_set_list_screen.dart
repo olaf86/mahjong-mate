@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -25,45 +27,66 @@ class RuleSetListScreen extends ConsumerWidget {
         child: ruleSets.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => _ErrorState(error: error),
-          data: (items) => ListView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+          data: (items) => Stack(
             children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
+              CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    pinned: true,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    scrolledUnderElevation: 0,
+                    flexibleSpace: ClipRect(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                        child: Container(
+                          color: Colors.white.withOpacity(0.001),
+                        ),
+                      ),
+                    ),
+                    title: Text(
                       'Mahjong Mate',
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
+                    actions: [
+                      IconButton(
+                        onPressed: () => context.pushNamed('settings-owner'),
+                        icon: const Icon(Icons.settings),
+                        tooltip: 'オーナー名',
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    onPressed: () => context.pushNamed('settings-owner'),
-                    icon: const Icon(Icons.settings),
-                    tooltip: 'オーナー名',
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 120),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate(
+                        [
+                          Text(
+                            'ルールセットを整理して、卓や雀荘へすぐ配信。',
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'メインコミュニティの採用ルールと役の解釈を、いつでも最新版で共有できます。',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                          const SizedBox(height: 14),
+                          OutlinedButton.icon(
+                            onPressed: () => _openShareCodeDialog(context),
+                            icon: const Icon(Icons.key),
+                            label: const Text('共有コードで開く'),
+                          ),
+                          const SizedBox(height: 24),
+                          if (items.isEmpty)
+                            const _EmptyState()
+                          else
+                            ...items.map((ruleSet) => _RuleSetCard(ruleSet: ruleSet)),
+                        ],
+                      ),
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'ルールセットを整理して、卓や雀荘へすぐ配信。',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'メインコミュニティの採用ルールと役の解釈を、いつでも最新版で共有できます。',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: 14),
-              OutlinedButton.icon(
-                onPressed: () => _openShareCodeDialog(context),
-                icon: const Icon(Icons.key),
-                label: const Text('共有コードで開く'),
-              ),
-              const SizedBox(height: 24),
-              if (items.isEmpty)
-                const _EmptyState()
-              else
-                ...items.map((ruleSet) => _RuleSetCard(ruleSet: ruleSet)),
             ],
           ),
         ),
