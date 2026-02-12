@@ -31,23 +31,6 @@ class RuleSetRepository {
     return _mergeStreams(publicStream, ownedStream);
   }
 
-  Future<void> migrateOwnerUid({
-    required String legacyDeviceId,
-    required String ownerUid,
-  }) async {
-    if (legacyDeviceId.isEmpty) return;
-    final snapshot =
-        await _collection.where('ownerDeviceId', isEqualTo: legacyDeviceId).get();
-    if (snapshot.docs.isEmpty) return;
-    final batch = _firestore.batch();
-    for (final doc in snapshot.docs) {
-      final data = doc.data();
-      if (data['ownerUid'] != null) continue;
-      batch.update(doc.reference, {'ownerUid': ownerUid});
-    }
-    await batch.commit();
-  }
-
   Future<RuleSet?> fetchRuleSetByShareCode(String shareCode) async {
     final snapshot =
         await _collection.where('shareCode', isEqualTo: shareCode).limit(1).get();
@@ -74,7 +57,6 @@ class RuleSetRepository {
       'name': name,
       'description': description,
       'ownerName': ownerName,
-      'ownerDeviceId': ownerUid,
       'ownerUid': ownerUid,
       'shareCode': shareCode,
       'visibility': visibility.name,
@@ -88,7 +70,6 @@ class RuleSetRepository {
       name: name,
       description: description,
       ownerName: ownerName,
-      ownerDeviceId: ownerUid,
       ownerUid: ownerUid,
       shareCode: shareCode,
       visibility: visibility,
@@ -115,7 +96,6 @@ class RuleSetRepository {
       'name': name,
       'description': description,
       'ownerName': ownerName,
-      'ownerDeviceId': ownerUid,
       'ownerUid': ownerUid,
       'shareCode': nextShareCode,
       'visibility': visibility.name,
@@ -157,7 +137,6 @@ class RuleSetRepository {
       name: _stringValue(data['name'], fallback: '名称未設定'),
       description: _stringValue(data['description'], fallback: ''),
       ownerName: _stringValue(data['ownerName'], fallback: 'Mahjong Mate'),
-      ownerDeviceId: _stringValueOrNull(data['ownerDeviceId']),
       ownerUid: _stringValueOrNull(data['ownerUid']),
       shareCode: _stringValueOrNull(data['shareCode']),
       visibility: _parseVisibility(data['visibility']),

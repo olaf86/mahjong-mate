@@ -11,7 +11,6 @@ class RuleSet {
     required this.items,
     this.shareCode,
     this.visibility = RuleSetVisibility.private,
-    this.ownerDeviceId,
     this.ownerUid,
     this.updatedAt,
     this.rules,
@@ -24,7 +23,6 @@ class RuleSet {
   final List<RuleItem> items;
   final String? shareCode;
   final RuleSetVisibility visibility;
-  final String? ownerDeviceId;
   final String? ownerUid;
   final DateTime? updatedAt;
   final RuleSetRules? rules;
