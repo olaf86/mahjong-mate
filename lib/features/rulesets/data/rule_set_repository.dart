@@ -108,6 +108,10 @@ class RuleSetRepository {
     await doc.update(updatePayload);
   }
 
+  Future<void> deleteRuleSet(String id) async {
+    await _collection.doc(id).delete();
+  }
+
   List<RuleSet> _mapQuery(QuerySnapshot<Map<String, dynamic>> snapshot) {
     return snapshot.docs.map(_mapDoc).toList();
   }

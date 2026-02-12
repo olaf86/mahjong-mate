@@ -10,6 +10,7 @@ import '../domain/rule_category.dart';
 import '../domain/rule_item.dart';
 import '../domain/rule_set_rules.dart';
 import '../domain/share_code.dart';
+import '../data/rule_set_repository.dart';
 
 class RuleSetDetailScreen extends ConsumerWidget {
   const RuleSetDetailScreen({super.key, required this.ruleSetId});
@@ -52,6 +53,11 @@ class RuleSetDetailScreen extends ConsumerWidget {
                 ),
                 icon: const Icon(Icons.edit),
               ),
+              IconButton(
+                onPressed: () => _confirmDelete(context, ref, ruleSet.id),
+                icon: const Icon(Icons.delete_outline),
+                tooltip: '削除',
+              ),
             ],
           ),
           body: ListView(
@@ -78,6 +84,37 @@ class RuleSetDetailScreen extends ConsumerWidget {
       },
     );
   }
+}
+
+Future<void> _confirmDelete(
+  BuildContext context,
+  WidgetRef ref,
+  String ruleSetId,
+) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('ルールセットを削除しますか？'),
+        content: const Text('この操作は取り消せません。共有コードも破棄されます。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('キャンセル'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('削除する'),
+          ),
+        ],
+      );
+    },
+  );
+  if (result != true) return;
+  final repository = ref.read(ruleSetRepositoryProvider);
+  await repository.deleteRuleSet(ruleSetId);
+  if (!context.mounted) return;
+  context.goNamed('ruleset-list');
 }
 
 class _HeaderCard extends StatelessWidget {
