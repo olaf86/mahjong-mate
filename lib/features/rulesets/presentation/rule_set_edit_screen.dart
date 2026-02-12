@@ -205,6 +205,11 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
               },
             ),
           ),
+          const SizedBox(height: 8),
+          Text(
+            '共有コードは一度公開すると変更されません。非公開に戻しても同じコードが使われます。削除すると破棄されます。',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: 24),
           Text('対局形式・参加人数', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),

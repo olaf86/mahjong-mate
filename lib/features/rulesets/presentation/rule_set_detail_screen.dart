@@ -183,6 +183,11 @@ class _HeaderCard extends StatelessWidget {
                 onCopy: () => _copyText(context, shareUrl),
                 onShare: () => Share.share(shareUrl),
               ),
+              const SizedBox(height: 8),
+              Text(
+                '共有コードは一度公開すると変更されません。非公開に戻しても同じコードが使われます。',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               const SizedBox(height: 16),
               Center(
                 child: QrImageView(
