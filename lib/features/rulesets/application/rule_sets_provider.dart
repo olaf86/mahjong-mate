@@ -16,6 +16,18 @@ final ruleSetsProvider = StreamProvider<List<RuleSet>>((ref) async* {
   yield* repository.watchRuleSets(ownerUid: ownerUid);
 });
 
+final followedRuleSetIdsProvider = StreamProvider<List<String>>((ref) async* {
+  final ownerUid = await ref.watch(ownerUidProvider.future);
+  final repository = ref.watch(ruleSetRepositoryProvider);
+  yield* repository.watchFollowedRuleSetIds(ownerUid: ownerUid);
+});
+
+final followedRuleSetsProvider = StreamProvider<List<RuleSet>>((ref) async* {
+  final ownerUid = await ref.watch(ownerUidProvider.future);
+  final repository = ref.watch(ruleSetRepositoryProvider);
+  yield* repository.watchFollowedRuleSets(ownerUid: ownerUid);
+});
+
 final ruleSetByIdProvider = Provider.family<AsyncValue<RuleSet?>, String>((ref, id) {
   final ruleSets = ref.watch(ruleSetsProvider);
   return ruleSets.whenData((items) {

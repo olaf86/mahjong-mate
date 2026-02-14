@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../shared/auth/auth_user_provider.dart';
 import '../../../shared/branding/app_logo.dart';
 import '../application/rule_sets_provider.dart';
 import '../domain/rule_category.dart';
@@ -11,12 +12,19 @@ import '../domain/rule_set.dart';
 import '../domain/rule_set_rules.dart';
 import '../domain/share_code.dart';
 
-class RuleSetListScreen extends ConsumerWidget {
+class RuleSetListScreen extends ConsumerStatefulWidget {
   const RuleSetListScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ruleSets = ref.watch(ruleSetsProvider);
+  ConsumerState<RuleSetListScreen> createState() => _RuleSetListScreenState();
+}
+
+class _RuleSetListScreenState extends ConsumerState<RuleSetListScreen> {
+  List<RuleSet>? _localItems;
+
+  @override
+  Widget build(BuildContext context) {
+    final ruleSets = ref.watch(followedRuleSetsProvider);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -79,20 +87,66 @@ class RuleSetListScreen extends ConsumerWidget {
                             label: const Text('共有コードで開く'),
                           ),
                           const SizedBox(height: 24),
-                          if (items.isEmpty)
-                            const _EmptyState()
-                          else
-                            ...items.map((ruleSet) => _RuleSetCard(ruleSet: ruleSet)),
                         ],
                       ),
                     ),
                   ),
+                  if (items.isEmpty)
+                    const SliverToBoxAdapter(child: _EmptyState())
+                  else
+                    SliverReorderableList(
+                      itemBuilder: (context, index) {
+                        final list = _currentItems(items);
+                        final ruleSet = list[index];
+                        return Padding(
+                          key: ValueKey(ruleSet.id),
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _RuleSetCard(ruleSet: ruleSet),
+                        );
+                      },
+                      itemCount: _currentItems(items).length,
+                      onReorder: (oldIndex, newIndex) =>
+                          _onReorder(items, oldIndex, newIndex),
+                    ),
                 ],
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  List<RuleSet> _currentItems(List<RuleSet> items) {
+    if (_localItems == null || !_sameOrder(_localItems!, items)) {
+      _localItems = List<RuleSet>.from(items);
+    }
+    return _localItems!;
+  }
+
+  bool _sameOrder(List<RuleSet> a, List<RuleSet> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+    }
+    return true;
+  }
+
+  Future<void> _onReorder(List<RuleSet> items, int oldIndex, int newIndex) async {
+    final list = List<RuleSet>.from(_currentItems(items));
+    if (newIndex > oldIndex) {
+      newIndex -= 1;
+    }
+    final moved = list.removeAt(oldIndex);
+    list.insert(newIndex, moved);
+    setState(() {
+      _localItems = list;
+    });
+    final ownerUid = await ref.read(ownerUidProvider.future);
+    final repository = ref.read(ruleSetRepositoryProvider);
+    await repository.updateFollowOrder(
+      ownerUid: ownerUid,
+      orderedRuleSetIds: list.map((item) => item.id).toList(),
     );
   }
 
@@ -486,10 +540,10 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('まだルールセットがありません。', style: Theme.of(context).textTheme.titleLarge),
+            Text('フォロー中のルールセットがありません。', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 8),
             Text(
-              '右下の「新規作成」から最初のルールセットを追加してください。',
+              '共有コードを入力してルールセットをフォローしてください。',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
           ],

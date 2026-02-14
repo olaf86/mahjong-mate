@@ -578,6 +578,10 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           items: const [],
           rules: rules,
         );
+        await repository.followRuleSet(
+          ownerUid: ownerUid,
+          ruleSetId: created.id,
+        );
         if (!mounted) return;
         context.goNamed(
           'ruleset-detail',

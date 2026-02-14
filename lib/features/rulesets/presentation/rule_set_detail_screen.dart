@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:flutter/services.dart';
 
 import '../application/rule_sets_provider.dart';
+import '../../../shared/auth/auth_user_provider.dart';
 import '../domain/rule_category.dart';
 import '../domain/rule_item.dart';
 import '../domain/rule_set_rules.dart';
@@ -40,11 +41,18 @@ class RuleSetDetailScreen extends ConsumerWidget {
         for (final item in ruleSet.items) {
           grouped.putIfAbsent(item.category, () => []).add(item);
         }
+        final followedIdsAsync = ref.watch(followedRuleSetIdsProvider);
+        final isFollowed = followedIdsAsync.value?.contains(ruleSet.id) ?? false;
 
         return Scaffold(
           appBar: AppBar(
             title: Text(ruleSet.name),
             actions: [
+              IconButton(
+                onPressed: () => _toggleFollow(ref, ruleSet.id, isFollowed),
+                icon: Icon(isFollowed ? Icons.star : Icons.star_border),
+                tooltip: isFollowed ? 'フォロー解除' : 'フォロー',
+              ),
               IconButton(
                 onPressed: () => context.goNamed(
                   'ruleset-edit',
@@ -82,6 +90,16 @@ class RuleSetDetailScreen extends ConsumerWidget {
         );
       },
     );
+  }
+}
+
+Future<void> _toggleFollow(WidgetRef ref, String ruleSetId, bool isFollowed) async {
+  final ownerUid = await ref.read(ownerUidProvider.future);
+  final repository = ref.read(ruleSetRepositoryProvider);
+  if (isFollowed) {
+    await repository.unfollowRuleSet(ownerUid: ownerUid, ruleSetId: ruleSetId);
+  } else {
+    await repository.followRuleSet(ownerUid: ownerUid, ruleSetId: ruleSetId);
   }
 }
 

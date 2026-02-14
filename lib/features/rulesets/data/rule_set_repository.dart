@@ -17,6 +17,8 @@ class RuleSetRepository {
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('rule_sets');
+  CollectionReference<Map<String, dynamic>> _followsCollection(String ownerUid) =>
+      _firestore.collection('users').doc(ownerUid).collection('follows');
 
   Stream<List<RuleSet>> watchRuleSets({required String ownerUid}) {
     final publicStream = _collection
@@ -29,6 +31,119 @@ class RuleSetRepository {
         .map(_mapQuery);
 
     return _mergeStreams(publicStream, ownedStream);
+  }
+
+  Stream<List<String>> watchFollowedRuleSetIds({required String ownerUid}) {
+    return _followsCollection(ownerUid)
+        .orderBy('order')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.id).toList());
+  }
+
+  Stream<List<RuleSet>> watchFollowedRuleSets({required String ownerUid}) {
+    final controller = StreamController<List<RuleSet>>();
+    final docSubs = <String, StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>>{};
+    final rulesets = <String, RuleSet>{};
+    var orderedIds = <String>[];
+
+    void emit() {
+      final list = <RuleSet>[];
+      for (final id in orderedIds) {
+        final ruleSet = rulesets[id];
+        if (ruleSet != null) {
+          list.add(ruleSet);
+        }
+      }
+      controller.add(list);
+    }
+
+    void updateSubscriptions(List<String> nextIds) {
+      final nextSet = nextIds.toSet();
+      for (final existing in docSubs.keys.toList()) {
+        if (!nextSet.contains(existing)) {
+          docSubs[existing]?.cancel();
+          docSubs.remove(existing);
+          rulesets.remove(existing);
+        }
+      }
+      for (final id in nextIds) {
+        if (docSubs.containsKey(id)) continue;
+        final sub = _collection.doc(id).snapshots().listen(
+          (snapshot) {
+            if (!snapshot.exists) {
+              rulesets.remove(id);
+            } else {
+              final data = snapshot.data();
+              if (data != null) {
+                rulesets[id] = _mapDocFromData(snapshot.id, data);
+              }
+            }
+            emit();
+          },
+          onError: (_) {
+            rulesets.remove(id);
+            emit();
+          },
+        );
+        docSubs[id] = sub;
+      }
+    }
+
+    final followSub = _followsCollection(ownerUid)
+        .orderBy('order')
+        .snapshots()
+        .listen((snapshot) {
+      orderedIds = snapshot.docs.map((doc) => doc.id).toList();
+      updateSubscriptions(orderedIds);
+      emit();
+    }, onError: controller.addError);
+
+    controller.onCancel = () {
+      followSub.cancel();
+      for (final sub in docSubs.values) {
+        sub.cancel();
+      }
+    };
+
+    return controller.stream;
+  }
+
+  Future<void> followRuleSet({
+    required String ownerUid,
+    required String ruleSetId,
+  }) async {
+    final docRef = _followsCollection(ownerUid).doc(ruleSetId);
+    final existing = await docRef.get();
+    if (existing.exists) return;
+    final snapshot =
+        await _followsCollection(ownerUid).orderBy('order', descending: true).limit(1).get();
+    final nextOrder = snapshot.docs.isEmpty
+        ? 0
+        : (snapshot.docs.first.data()['order'] as int? ?? 0) + 1;
+    await docRef.set({
+      'order': nextOrder,
+      'ruleSetId': ruleSetId,
+      'followedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Future<void> unfollowRuleSet({
+    required String ownerUid,
+    required String ruleSetId,
+  }) async {
+    await _followsCollection(ownerUid).doc(ruleSetId).delete();
+  }
+
+  Future<void> updateFollowOrder({
+    required String ownerUid,
+    required List<String> orderedRuleSetIds,
+  }) async {
+    final batch = _firestore.batch();
+    for (var i = 0; i < orderedRuleSetIds.length; i++) {
+      final id = orderedRuleSetIds[i];
+      batch.update(_followsCollection(ownerUid).doc(id), {'order': i});
+    }
+    await batch.commit();
   }
 
   Future<RuleSet?> fetchRuleSetByShareCode(String shareCode) async {
@@ -118,7 +233,31 @@ class RuleSetRepository {
 
   RuleSet _mapDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
-    final itemsRaw = data['items'];
+    final items = _parseItems(data['items']);
+    return _mapDocFromData(doc.id, data, items: items);
+  }
+
+  RuleSet _mapDocFromData(
+    String id,
+    Map<String, dynamic> data, {
+    List<RuleItem>? items,
+  }) {
+    final resolvedItems = items ?? _parseItems(data['items']);
+    return RuleSet(
+      id: id,
+      name: _stringValue(data['name'], fallback: '名称未設定'),
+      description: _stringValue(data['description'], fallback: ''),
+      ownerName: _stringValue(data['ownerName'], fallback: 'Mahjong Mate'),
+      ownerUid: _stringValueOrNull(data['ownerUid']),
+      shareCode: _stringValueOrNull(data['shareCode']),
+      visibility: _parseVisibility(data['visibility']),
+      updatedAt: _parseTimestamp(data['updatedAt']),
+      items: resolvedItems,
+      rules: RuleSetRules.fromMap(data['rules']),
+    );
+  }
+
+  List<RuleItem> _parseItems(Object? itemsRaw) {
     final items = <RuleItem>[];
     if (itemsRaw is List) {
       for (final item in itemsRaw) {
@@ -135,19 +274,7 @@ class RuleSetRepository {
         }
       }
     }
-
-    return RuleSet(
-      id: doc.id,
-      name: _stringValue(data['name'], fallback: '名称未設定'),
-      description: _stringValue(data['description'], fallback: ''),
-      ownerName: _stringValue(data['ownerName'], fallback: 'Mahjong Mate'),
-      ownerUid: _stringValueOrNull(data['ownerUid']),
-      shareCode: _stringValueOrNull(data['shareCode']),
-      visibility: _parseVisibility(data['visibility']),
-      updatedAt: _parseTimestamp(data['updatedAt']),
-      items: items,
-      rules: RuleSetRules.fromMap(data['rules']),
-    );
+    return items;
   }
 
   Map<String, dynamic> _itemToMap(RuleItem item) {
