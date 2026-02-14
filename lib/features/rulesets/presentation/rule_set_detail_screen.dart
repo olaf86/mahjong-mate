@@ -43,16 +43,27 @@ class RuleSetDetailScreen extends ConsumerWidget {
         }
         final followedIdsAsync = ref.watch(followedRuleSetIdsProvider);
         final isFollowed = followedIdsAsync.value?.contains(ruleSet.id) ?? false;
+        final ownerUidAsync = ref.watch(ownerUidProvider);
+        final ownerUid = ownerUidAsync.value;
+        final isOwner = ownerUid != null && ruleSet.ownerUid == ownerUid;
 
         return Scaffold(
           appBar: AppBar(
             title: Text(ruleSet.name),
             actions: [
-              IconButton(
-                onPressed: () => _toggleFollow(ref, ruleSet.id, isFollowed),
-                icon: Icon(isFollowed ? Icons.star : Icons.star_border),
-                tooltip: isFollowed ? 'フォロー解除' : 'フォロー',
-              ),
+              if (!isOwner)
+                IconButton(
+                  onPressed: () => _toggleFollow(
+                    context,
+                    ref,
+                    ruleSetId: ruleSet.id,
+                    isFollowed: isFollowed,
+                    isPublic: ruleSet.isPublic,
+                    ruleSetOwnerUid: ruleSet.ownerUid,
+                  ),
+                  icon: Icon(isFollowed ? Icons.star : Icons.star_border),
+                  tooltip: isFollowed ? 'フォロー解除' : 'フォロー',
+                ),
               IconButton(
                 onPressed: () => context.goNamed(
                   'ruleset-edit',
@@ -94,8 +105,42 @@ class RuleSetDetailScreen extends ConsumerWidget {
   }
 }
 
-Future<void> _toggleFollow(WidgetRef ref, String ruleSetId, bool isFollowed) async {
+Future<void> _toggleFollow(
+  BuildContext context,
+  WidgetRef ref, {
+  required String ruleSetId,
+  required bool isFollowed,
+  required bool isPublic,
+  required String? ruleSetOwnerUid,
+}) async {
   final ownerUid = await ref.read(ownerUidProvider.future);
+  if (ruleSetOwnerUid != null && ownerUid == ruleSetOwnerUid) {
+    return;
+  }
+  if (isFollowed && isPublic) {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('フォロー解除の確認'),
+          content: const Text(
+            'フォローを解除すると、このルールセットは一覧で表示されなくなります。よろしいでしょうか？',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('解除する'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true) return;
+  }
   final repository = ref.read(ruleSetRepositoryProvider);
   if (isFollowed) {
     await repository.unfollowRuleSet(ownerUid: ownerUid, ruleSetId: ruleSetId);
@@ -227,41 +272,47 @@ class _HeaderCard extends StatelessWidget {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      useSafeArea: true,
+      isScrollControlled: true,
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text('共有', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 12),
-              _ShareRow(
-                label: '共有コード',
-                value: shareCode,
-                onCopy: () => _copyText(context, shareCode),
-              ),
-              const SizedBox(height: 8),
-              _ShareRow(
-                label: '共有URL',
-                value: shareUrl,
-                onCopy: () => _copyText(context, shareUrl),
-                onShare: () => Share.share(shareUrl),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '共有コードは一度公開すると変更されません。非公開に戻しても同じコードが使われます。',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: QrImageView(
-                  data: shareUrl,
-                  size: 160,
-                  backgroundColor: Colors.white,
+        final maxHeight = MediaQuery.of(context).size.height * 0.9;
+        return SizedBox(
+          height: maxHeight,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('共有', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 12),
+                _ShareRow(
+                  label: '共有コード',
+                  value: shareCode,
+                  onCopy: () => _copyText(context, shareCode),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                _ShareRow(
+                  label: '共有URL',
+                  value: shareUrl,
+                  onCopy: () => _copyText(context, shareUrl),
+                  onShare: () => Share.share(shareUrl),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '共有コードは一度公開すると変更されません。非公開に戻しても同じコードが使われます。',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: QrImageView(
+                    data: shareUrl,
+                    size: 160,
+                    backgroundColor: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
           ),
         );
       },
