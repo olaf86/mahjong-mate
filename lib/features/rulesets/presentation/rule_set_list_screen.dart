@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -121,8 +122,15 @@ class RuleSetListScreen extends ConsumerWidget {
           content: TextField(
             controller: controller,
             decoration: const InputDecoration(
-              hintText: '例: MJM-AB12',
+              prefixIcon: _SharePrefixIcon(text: 'MJM-'),
+              prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
+              hintText: 'AB12',
             ),
+            textCapitalization: TextCapitalization.characters,
+            maxLength: 4,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
+            ],
           ),
           actions: [
             TextButton(
@@ -131,7 +139,7 @@ class RuleSetListScreen extends ConsumerWidget {
             ),
             FilledButton(
               onPressed: () {
-                final code = controller.text.trim();
+                final code = controller.text.trim().toUpperCase();
                 Navigator.of(context).pop(code);
               },
               child: const Text('開く'),
@@ -143,7 +151,7 @@ class RuleSetListScreen extends ConsumerWidget {
     if (result == null || result.trim().isEmpty) {
       return;
     }
-    final normalized = normalizeShareCode(result);
+    final normalized = normalizeShareCode('MJM-$result');
     if (normalized.isEmpty) {
       return;
     }
@@ -407,6 +415,21 @@ class _RuleSetCard extends StatelessWidget {
     return value.replaceAll(' ', '').trim();
   }
 
+}
+
+class _SharePrefixIcon extends StatelessWidget {
+  const _SharePrefixIcon({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = Theme.of(context).textTheme.bodyLarge;
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, right: 6),
+      child: Text(text, style: style),
+    );
+  }
 }
 
 class _MiniTag extends StatelessWidget {
