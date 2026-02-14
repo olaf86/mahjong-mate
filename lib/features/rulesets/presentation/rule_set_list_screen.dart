@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/branding/app_logo.dart';
 import '../application/rule_sets_provider.dart';
@@ -14,6 +15,8 @@ import '../domain/share_code.dart';
 
 class RuleSetListScreen extends ConsumerWidget {
   const RuleSetListScreen({super.key});
+
+  static final Uri _donationUrl = Uri.parse('https://buymeacoffee.com/olaf86');
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -57,6 +60,11 @@ class RuleSetListScreen extends ConsumerWidget {
                       ],
                     ),
                     actions: [
+                      IconButton(
+                        onPressed: () => _openDonation(context),
+                        icon: const Icon(Icons.favorite),
+                        tooltip: '寄付する',
+                      ),
                       IconButton(
                         onPressed: () => context.pushNamed('followed-order'),
                         icon: const Icon(Icons.swap_vert),
@@ -157,6 +165,15 @@ class RuleSetListScreen extends ConsumerWidget {
     }
     if (!context.mounted) return;
     context.go('/r/$normalized');
+  }
+
+  Future<void> _openDonation(BuildContext context) async {
+    if (!await launchUrl(_donationUrl, mode: LaunchMode.externalApplication)) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ブラウザを開けませんでした。')),
+      );
+    }
   }
 }
 
