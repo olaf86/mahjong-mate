@@ -76,6 +76,7 @@ class RuleSetDetailScreen extends ConsumerWidget {
                 ownerName: ruleSet.ownerName,
                 shareCode: ruleSet.shareCode,
                 isPublic: ruleSet.isPublic,
+                updatedAtLabel: ruleSet.updatedAtLabel,
               ),
               const SizedBox(height: 16),
               if (ruleSet.rules != null)
@@ -141,6 +142,7 @@ class _HeaderCard extends StatelessWidget {
     required this.ownerName,
     required this.shareCode,
     required this.isPublic,
+    required this.updatedAtLabel,
   });
 
   final String name;
@@ -148,6 +150,7 @@ class _HeaderCard extends StatelessWidget {
   final String ownerName;
   final String? shareCode;
   final bool isPublic;
+  final String updatedAtLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -196,6 +199,14 @@ class _HeaderCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.update, size: 18),
+                  const SizedBox(width: 6),
+                  Text(updatedAtLabel),
+                ],
+              ),
               if (isPublic)
                 Row(
                   mainAxisSize: MainAxisSize.min,

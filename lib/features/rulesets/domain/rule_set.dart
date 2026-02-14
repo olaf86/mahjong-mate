@@ -28,4 +28,13 @@ class RuleSet {
   final RuleSetRules? rules;
 
   bool get isPublic => visibility == RuleSetVisibility.public;
+
+  String get updatedAtLabel {
+    final value = updatedAt;
+    if (value == null) return '更新日 未設定';
+    final year = value.year.toString().padLeft(4, '0');
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    return '$year/$month/$day 更新';
+  }
 }

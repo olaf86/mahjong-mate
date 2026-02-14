@@ -266,6 +266,14 @@ class _RuleSetCard extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(Icons.update, size: 16),
+                        const SizedBox(width: 6),
+                        Text(ruleSet.updatedAtLabel),
+                      ],
+                    ),
                     if (ruleSet.shareCode != null) ...[
                       const SizedBox(height: 6),
                       Text(
