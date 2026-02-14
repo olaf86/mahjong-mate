@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../shared/branding/app_logo.dart';
 import '../application/rule_sets_provider.dart';
 import '../domain/rule_category.dart';
 import '../domain/rule_set.dart';
@@ -44,9 +45,15 @@ class RuleSetListScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    title: Text(
-                      'Mahjong Mate',
-                      style: Theme.of(context).textTheme.labelLarge,
+                    title: Row(
+                      children: [
+                        const AppLogo(size: 28),
+                        const SizedBox(width: 10),
+                        Text(
+                          '雀メイト',
+                          style: Theme.of(context).textTheme.labelLarge,
+                        ),
+                      ],
                     ),
                     actions: [
                       IconButton(

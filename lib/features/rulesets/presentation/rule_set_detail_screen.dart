@@ -10,7 +10,6 @@ import '../domain/rule_category.dart';
 import '../domain/rule_item.dart';
 import '../domain/rule_set_rules.dart';
 import '../domain/share_code.dart';
-import '../data/rule_set_repository.dart';
 
 class RuleSetDetailScreen extends ConsumerWidget {
   const RuleSetDetailScreen({super.key, required this.ruleSetId});
