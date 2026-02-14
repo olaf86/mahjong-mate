@@ -62,13 +62,8 @@ class RuleSetListScreen extends ConsumerWidget {
                       delegate: SliverChildListDelegate(
                         [
                           Text(
-                            'ルールセットを整理して、卓や雀荘へすぐ配信。',
+                            '麻雀ルールを仲間と共有しよう',
                             style: Theme.of(context).textTheme.headlineMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'メインコミュニティの採用ルールと役の解釈を、いつでも最新版で共有できます。',
-                            style: Theme.of(context).textTheme.bodyLarge,
                           ),
                           const SizedBox(height: 14),
                           OutlinedButton.icon(
