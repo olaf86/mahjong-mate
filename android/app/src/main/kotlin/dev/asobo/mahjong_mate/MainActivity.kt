@@ -1,4 +1,4 @@
-package com.example.mahjong_mate
+package dev.asobo.mahjong_mate
 
 import io.flutter.embedding.android.FlutterActivity
 
