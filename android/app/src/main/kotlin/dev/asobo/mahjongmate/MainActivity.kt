@@ -1,4 +1,4 @@
-package dev.asobo.mahjong_mate
+package dev.asobo.mahjongmate
 
 import io.flutter.embedding.android.FlutterActivity
 

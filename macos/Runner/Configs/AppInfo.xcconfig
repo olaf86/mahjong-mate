@@ -8,7 +8,7 @@
 PRODUCT_NAME = mahjong_mate
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = dev.asobo.mahjong_mate
+PRODUCT_BUNDLE_IDENTIFIER = dev.asobo.mahjongmate
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 asobo.dev. All rights reserved.
