@@ -77,6 +77,7 @@ flutter:
   #   - images/a_dot_ham.jpeg
   assets:
     - assets/branding/logo.png
+    - assets/branding/logo_android_foreground.png
     - assets/branding/splash.png
 
 flutter_native_splash:
@@ -93,6 +94,8 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: assets/branding/logo.png
+  adaptive_icon_background: "#F7F2E9"
+  adaptive_icon_foreground: assets/branding/logo_android_foreground.png
   remove_alpha_ios: true
 
   # An image asset can refer to one or more resolution-specific "variants", see
