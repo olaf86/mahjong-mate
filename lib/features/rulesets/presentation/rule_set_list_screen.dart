@@ -71,9 +71,9 @@ class RuleSetListScreen extends ConsumerWidget {
                         tooltip: '並び替え',
                       ),
                       IconButton(
-                        onPressed: () => context.pushNamed('settings-owner'),
+                        onPressed: () => context.pushNamed('settings'),
                         icon: const Icon(Icons.settings),
-                        tooltip: 'オーナー名',
+                        tooltip: '設定',
                       ),
                     ],
                   ),

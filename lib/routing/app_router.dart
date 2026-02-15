@@ -5,7 +5,7 @@ import '../features/rulesets/presentation/rule_set_edit_screen.dart';
 import '../features/rulesets/presentation/rule_set_list_screen.dart';
 import '../features/rulesets/presentation/rule_set_share_resolver_screen.dart';
 import '../features/rulesets/presentation/followed_ruleset_order_screen.dart';
-import '../features/settings/presentation/owner_name_settings_screen.dart';
+import '../features/settings/presentation/settings_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -18,9 +18,9 @@ final appRouter = GoRouter(
       ),
     ),
     GoRoute(
-      path: '/settings/owner',
-      name: 'settings-owner',
-      builder: (context, state) => const OwnerNameSettingsScreen(),
+      path: '/settings',
+      name: 'settings',
+      builder: (context, state) => const SettingsScreen(),
     ),
     GoRoute(
       path: '/rulesets/followed/order',

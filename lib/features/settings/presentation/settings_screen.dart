@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/profile/auto_follow_provider.dart';
 import '../../../shared/profile/owner_name_provider.dart';
 
-class OwnerNameSettingsScreen extends ConsumerStatefulWidget {
-  const OwnerNameSettingsScreen({super.key});
+class SettingsScreen extends ConsumerStatefulWidget {
+  const SettingsScreen({super.key});
 
   @override
-  ConsumerState<OwnerNameSettingsScreen> createState() => _OwnerNameSettingsScreenState();
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _OwnerNameSettingsScreenState extends ConsumerState<OwnerNameSettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late final TextEditingController _controller;
   bool _initialized = false;
 
@@ -29,6 +30,7 @@ class _OwnerNameSettingsScreenState extends ConsumerState<OwnerNameSettingsScree
   @override
   Widget build(BuildContext context) {
     final ownerNameAsync = ref.watch(ownerNameProvider);
+    final autoFollowAsync = ref.watch(autoFollowProvider);
     ownerNameAsync.whenData((value) {
       if (!_initialized) {
         _initialized = true;
@@ -38,7 +40,7 @@ class _OwnerNameSettingsScreenState extends ConsumerState<OwnerNameSettingsScree
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('オーナー名の設定'),
+        title: const Text('設定'),
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -54,6 +56,21 @@ class _OwnerNameSettingsScreenState extends ConsumerState<OwnerNameSettingsScree
               labelText: 'オーナー名',
               helperText: '空欄の場合は「あなた」になります。',
             ),
+          ),
+          const SizedBox(height: 16),
+          autoFollowAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+            data: (value) {
+              return SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('共有リンクを開いたら自動でフォローする'),
+                subtitle: const Text('共有コード経由で開いたルールセットを自動的に一覧へ追加します。'),
+                value: value,
+                onChanged: (next) =>
+                    ref.read(autoFollowProvider.notifier).setAutoFollow(next),
+              );
+            },
           ),
           const SizedBox(height: 16),
           FilledButton(
