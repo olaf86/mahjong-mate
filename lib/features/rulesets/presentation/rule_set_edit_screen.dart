@@ -123,6 +123,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
     _initializeIfNeeded();
     final ruleSetId = widget.ruleSetId;
     final ruleSetAsync = ruleSetId == null ? null : ref.watch(ruleSetByIdProvider(ruleSetId));
+    final ownerUidAsync = ref.watch(ownerUidProvider);
 
     return ruleSetAsync?.when(
           loading: () => const Scaffold(
@@ -139,11 +140,33 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
                 body: const Center(child: Text('指定されたルールセットは存在しません。')),
               );
             }
-            return _buildForm(
-              context,
-              ruleSetId == null ? 'ルールセット作成' : 'ルールセット編集',
-              ruleSet,
-            );
+            if (ruleSetId != null) {
+              return ownerUidAsync.when(
+                loading: () => const Scaffold(
+                  body: Center(child: CircularProgressIndicator()),
+                ),
+                error: (error, _) => Scaffold(
+                  appBar: AppBar(title: const Text('読み込みに失敗しました。')),
+                  body: Center(child: Text(error.toString())),
+                ),
+                data: (ownerUid) {
+                  if (ruleSet?.ownerUid != ownerUid) {
+                    return Scaffold(
+                      appBar: AppBar(title: const Text('編集できません。')),
+                      body: const Center(
+                        child: Text('オーナー以外はこのルールセットを編集できません。'),
+                      ),
+                    );
+                  }
+                  return _buildForm(
+                    context,
+                    'ルールセット編集',
+                    ruleSet,
+                  );
+                },
+              );
+            }
+            return _buildForm(context, 'ルールセット作成', ruleSet);
           },
         ) ??
         _buildForm(context, 'ルールセット作成', null);

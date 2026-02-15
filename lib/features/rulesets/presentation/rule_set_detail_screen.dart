@@ -64,13 +64,15 @@ class RuleSetDetailScreen extends ConsumerWidget {
                   icon: Icon(isFollowed ? Icons.star : Icons.star_border),
                   tooltip: isFollowed ? 'フォロー解除' : 'フォロー',
                 ),
-              IconButton(
-                onPressed: () => context.goNamed(
-                  'ruleset-edit',
-                  pathParameters: {'id': ruleSet.id},
+              if (isOwner)
+                IconButton(
+                  onPressed: () => context.goNamed(
+                    'ruleset-edit',
+                    pathParameters: {'id': ruleSet.id},
+                  ),
+                  icon: const Icon(Icons.edit),
+                  tooltip: '編集',
                 ),
-                icon: const Icon(Icons.edit),
-              ),
               IconButton(
                 onPressed: () => _confirmDelete(context, ref, ruleSet.id),
                 icon: const Icon(Icons.delete_outline),
