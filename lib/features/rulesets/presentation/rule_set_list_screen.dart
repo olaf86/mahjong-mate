@@ -221,20 +221,27 @@ class _RuleSetCard extends StatelessWidget {
                 Text(ruleSet.description),
                 const SizedBox(height: 12),
                 if (tiles == null)
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 6,
-                    children: RuleCategory.values.map((category) {
-                      final count = categoryCounts[category] ?? 0;
-                      return _MiniTag(label: '${category.label} $count');
-                    }).toList(),
+                  Align(
+                    alignment: Alignment.center,
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      alignment: WrapAlignment.center,
+                      children: RuleCategory.values.map((category) {
+                        final count = categoryCounts[category] ?? 0;
+                        return _MiniTag(label: '${category.label} $count');
+                      }).toList(),
+                    ),
                   )
                 else
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: tiles.map((tile) => _RuleTile(tile: tile)).toList(),
+                  Align(
+                    alignment: Alignment.center,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
+                      children: tiles.map((tile) => _RuleTile(tile: tile)).toList(),
+                    ),
                   ),
                 const SizedBox(height: 12),
                 Column(
