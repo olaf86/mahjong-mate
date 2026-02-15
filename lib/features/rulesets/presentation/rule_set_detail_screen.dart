@@ -233,18 +233,33 @@ class _HeaderCard extends StatelessWidget {
                 ],
               ),
               if (shareCode != null)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.share, size: 18),
-                    const SizedBox(width: 6),
-                    Text('共有コード $shareCode'),
-                    const SizedBox(width: 8),
-                    TextButton(
-                      onPressed: () => _openShareSheet(context, shareCode!, shareUrl!),
-                      child: const Text('共有'),
-                    ),
-                  ],
+                SizedBox(
+                  width: double.infinity,
+                  child: Row(
+                    children: [
+                      const Icon(Icons.share, size: 18),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        fit: FlexFit.loose,
+                        child: Text(
+                          '共有コード $shareCode',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      TextButton(
+                        onPressed: () => _openShareSheet(context, shareCode!, shareUrl!),
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          visualDensity: VisualDensity.compact,
+                        ),
+                        child: const Text('共有'),
+                      ),
+                    ],
+                  ),
                 ),
               Row(
                 mainAxisSize: MainAxisSize.min,
