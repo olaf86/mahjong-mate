@@ -95,19 +95,32 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
-          TextField(
-            controller: _emailController,
-            keyboardType: TextInputType.emailAddress,
-            decoration: const InputDecoration(
-              labelText: 'メールアドレス',
-            ),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _passwordController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'パスワード',
+          AutofillGroup(
+            child: Column(
+              children: [
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const [AutofillHints.email],
+                  decoration: const InputDecoration(
+                    labelText: 'メールアドレス',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: _passwordController,
+                  obscureText: true,
+                  enableSuggestions: false,
+                  autocorrect: false,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.newPassword],
+                  decoration: const InputDecoration(
+                    labelText: 'パスワード',
+                    helperText: '8文字以上・英大文字/英小文字/数字を含めてください。',
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 12),
@@ -169,6 +182,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final password = _passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
       _showSnack(context, 'メールアドレスとパスワードを入力してください。');
+      return;
+    }
+    final validationMessage = _validateRegistrationPassword(password);
+    if (validationMessage != null) {
+      _showSnack(context, validationMessage);
       return;
     }
     if (user == null || !user.isAnonymous) {
@@ -277,5 +295,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       default:
         return '認証に失敗しました: ${error.message ?? error.code}';
     }
+  }
+
+  String? _validateRegistrationPassword(String password) {
+    if (password.length < 8) {
+      return 'パスワードは8文字以上で設定してください。';
+    }
+    final hasUpper = RegExp('[A-Z]').hasMatch(password);
+    final hasLower = RegExp('[a-z]').hasMatch(password);
+    final hasDigit = RegExp(r'\d').hasMatch(password);
+    if (!hasUpper || !hasLower || !hasDigit) {
+      return 'パスワードは英大文字・英小文字・数字を含めてください。';
+    }
+    return null;
   }
 }
