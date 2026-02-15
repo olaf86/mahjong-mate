@@ -13,7 +13,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
   ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+class _SettingsScreenState extends ConsumerState<SettingsScreen>
+    with WidgetsBindingObserver {
   late final TextEditingController _controller;
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
@@ -26,14 +27,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _controller = TextEditingController();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshAuthState(silent: true);
+    });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshAuthState(silent: true);
+    }
   }
 
   @override
@@ -91,7 +104,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ? 'ログイン状態を確認中です。'
                 : user.isAnonymous
                     ? '未登録'
-                    : 'ログイン中: ${user.email ?? 'メール未設定'}',
+                    : user.emailVerified
+                        ? 'ログイン中: ${user.email ?? 'メール未設定'}'
+                        : '未認証: ${user.email ?? 'メール未設定'}',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -152,6 +167,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           if (user != null && !user.isAnonymous) ...[
             const SizedBox(height: 12),
+            if (!user.emailVerified) ...[
+              Row(
+                children: [
+                  const Icon(Icons.error_outline, size: 18, color: Colors.deepOrange),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      'メールアドレスが未認証です。',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton(
+                onPressed: _authBusy ? null : () => _sendVerification(context, auth),
+                child: const Text('認証メールを再送'),
+              ),
+            ],
             TextButton(
               onPressed: _authBusy ? null : () => _signOut(context, auth),
               child: const Text('ログアウト'),
@@ -200,7 +234,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         password: password,
       );
       await user.linkWithCredential(credential);
-      _showSnack(context, 'アカウントを登録しました。');
+      await _sendVerification(context, auth);
+      await auth.currentUser?.reload();
+      _showSnack(context, 'アカウントを登録しました。認証メールをご確認ください。');
       setState(() {});
     } on FirebaseAuthException catch (error) {
       _showSnack(context, _authErrorMessage(error));
@@ -252,7 +288,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         email: email,
         password: password,
       );
-      _showSnack(context, 'ログインしました。');
+      final current = auth.currentUser;
+      if (current != null && !current.emailVerified) {
+        await _promptUnverified(context, auth);
+        _showSnack(context, 'ログインしました（未認証）。');
+      } else {
+        _showSnack(context, 'ログインしました。');
+      }
       setState(() {});
     } on FirebaseAuthException catch (error) {
       _showSnack(context, _authErrorMessage(error));
@@ -276,6 +318,60 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     }
   }
 
+  Future<void> _refreshAuthState({bool silent = false}) async {
+    setState(() => _authBusy = true);
+    try {
+      final auth = ref.read(firebaseAuthProvider);
+      await auth.currentUser?.reload();
+      if (!silent && mounted) {
+        _showSnack(context, '認証状態を更新しました。');
+      }
+      if (mounted) {
+        setState(() {});
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _authBusy = false);
+      }
+    }
+  }
+
+  Future<void> _sendVerification(BuildContext context, FirebaseAuth auth) async {
+    final user = auth.currentUser;
+    if (user == null || user.emailVerified) return;
+    try {
+      await user.sendEmailVerification();
+      _showSnack(context, '認証メールを送信しました。');
+    } on FirebaseAuthException catch (error) {
+      _showSnack(context, _authErrorMessage(error));
+    }
+  }
+
+  Future<void> _promptUnverified(BuildContext context, FirebaseAuth auth) async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('メールアドレス未認証'),
+          content: const Text('ログインは完了していますが、メールアドレスの認証が必要です。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('後で'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _sendVerification(context, auth);
+              },
+              child: const Text('認証メールを送信'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showSnack(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
@@ -286,8 +382,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         return 'このメールアドレスは既に使用されています。';
       case 'invalid-email':
         return 'メールアドレスの形式が正しくありません。';
+      case 'operation-not-allowed':
+        return 'この認証方法は現在無効です。';
       case 'weak-password':
         return 'パスワードが弱すぎます。';
+      case 'too-many-requests':
+        return '試行回数が多すぎます。しばらく待ってからお試しください。';
       case 'wrong-password':
         return 'パスワードが正しくありません。';
       case 'user-not-found':
