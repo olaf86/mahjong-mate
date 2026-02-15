@@ -11,4 +11,4 @@ PRODUCT_NAME = mahjong_mate
 PRODUCT_BUNDLE_IDENTIFIER = dev.asobo.mahjong_mate
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 asobo.dev. All rights reserved.
