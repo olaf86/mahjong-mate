@@ -250,6 +250,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
     setState(() => _authBusy = true);
     try {
       await auth.signOut();
+      await auth.signInAnonymously();
       _showSnack(context, 'ログアウトしました。');
       setState(() {});
     } finally {
