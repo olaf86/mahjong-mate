@@ -6,6 +6,7 @@ import '../features/rulesets/presentation/rule_set_list_screen.dart';
 import '../features/rulesets/presentation/rule_set_share_resolver_screen.dart';
 import '../features/rulesets/presentation/followed_ruleset_order_screen.dart';
 import '../features/settings/presentation/settings_screen.dart';
+import '../features/auth/presentation/auth_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',
@@ -21,6 +22,11 @@ final appRouter = GoRouter(
       path: '/settings',
       name: 'settings',
       builder: (context, state) => const SettingsScreen(),
+    ),
+    GoRoute(
+      path: '/auth',
+      name: 'auth',
+      builder: (context, state) => const AuthScreen(),
     ),
     GoRoute(
       path: '/rulesets/followed/order',

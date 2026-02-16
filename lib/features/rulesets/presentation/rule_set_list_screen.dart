@@ -75,6 +75,11 @@ class RuleSetListScreen extends ConsumerWidget {
                         icon: const Icon(Icons.settings),
                         tooltip: '設定',
                       ),
+                      IconButton(
+                        onPressed: () => context.pushNamed('auth'),
+                        icon: const Icon(Icons.person),
+                        tooltip: '認証',
+                      ),
                     ],
                   ),
                   SliverPadding(
