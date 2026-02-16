@@ -73,17 +73,17 @@ class RuleSetListScreen extends ConsumerWidget {
                       ),
                       IconButton(
                         onPressed: () => context.pushNamed('followed-order'),
-                        icon: Icon(Icons.swap_vert, color: iconColor),
+                        icon: Icon(Icons.swap_vert_circle_outlined, color: iconColor),
                         tooltip: '並び替え',
                       ),
                       IconButton(
                         onPressed: () => context.pushNamed('settings'),
-                        icon: Icon(Icons.settings, color: iconColor),
+                        icon: Icon(Icons.settings_outlined, color: iconColor),
                         tooltip: '設定',
                       ),
                       IconButton(
                         onPressed: () => context.pushNamed('auth'),
-                        icon: Icon(Icons.person, color: iconColor),
+                        icon: Icon(Icons.person_outline, color: iconColor),
                         tooltip: '認証',
                       ),
                     ],
