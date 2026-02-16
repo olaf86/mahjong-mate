@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../shared/branding/app_logo.dart';
 import '../application/rule_sets_provider.dart';
@@ -62,7 +63,11 @@ class RuleSetListScreen extends ConsumerWidget {
                     actions: [
                       IconButton(
                         onPressed: () => _openDonation(context),
-                        icon: const Icon(Icons.favorite),
+                        icon: SvgPicture.asset(
+                          'assets/icons/buymeacoffee.svg',
+                          width: 20,
+                          height: 20,
+                        ),
                         tooltip: '寄付する',
                       ),
                       IconButton(
