@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../shared/branding/app_logo.dart';
 import '../application/rule_sets_provider.dart';
@@ -21,6 +22,7 @@ class RuleSetListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ruleSets = ref.watch(followedRuleSetsProvider);
+    final iconColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.8);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -62,22 +64,26 @@ class RuleSetListScreen extends ConsumerWidget {
                     actions: [
                       IconButton(
                         onPressed: () => _openDonation(context),
-                        icon: const Icon(Icons.favorite),
+                        icon: SvgPicture.asset(
+                          'assets/icons/buymeacoffee.svg',
+                          width: 20,
+                          height: 20,
+                        ),
                         tooltip: '寄付する',
                       ),
                       IconButton(
                         onPressed: () => context.pushNamed('followed-order'),
-                        icon: const Icon(Icons.swap_vert),
+                        icon: Icon(Icons.swap_vert_circle_outlined, color: iconColor),
                         tooltip: '並び替え',
                       ),
                       IconButton(
                         onPressed: () => context.pushNamed('settings'),
-                        icon: const Icon(Icons.settings),
+                        icon: Icon(Icons.settings_outlined, color: iconColor),
                         tooltip: '設定',
                       ),
                       IconButton(
                         onPressed: () => context.pushNamed('auth'),
-                        icon: const Icon(Icons.person),
+                        icon: Icon(Icons.person_outline, color: iconColor),
                         tooltip: '認証',
                       ),
                     ],
