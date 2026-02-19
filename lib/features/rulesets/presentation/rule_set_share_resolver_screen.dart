@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../shared/auth/auth_user_provider.dart';
 import '../../../shared/profile/auto_follow_provider.dart';
 import '../application/rule_sets_provider.dart';
-import '../data/rule_set_repository.dart';
 import '../domain/share_code.dart';
 
 class RuleSetShareResolverScreen extends ConsumerStatefulWidget {
