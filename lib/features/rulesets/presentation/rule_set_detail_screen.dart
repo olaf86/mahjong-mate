@@ -7,8 +7,6 @@ import 'package:flutter/services.dart';
 
 import '../application/rule_sets_provider.dart';
 import '../../../shared/auth/auth_user_provider.dart';
-import '../domain/rule_category.dart';
-import '../domain/rule_item.dart';
 import '../domain/rule_set_rules.dart';
 import '../domain/share_code.dart';
 
@@ -37,10 +35,6 @@ class RuleSetDetailScreen extends ConsumerWidget {
           );
         }
 
-        final grouped = <RuleCategory, List<RuleItem>>{};
-        for (final item in ruleSet.items) {
-          grouped.putIfAbsent(item.category, () => []).add(item);
-        }
         final followedIdsAsync = ref.watch(followedRuleSetIdsProvider);
         final isFollowed = followedIdsAsync.value?.contains(ruleSet.id) ?? false;
         final ownerUidAsync = ref.watch(ownerUidProvider);
@@ -93,12 +87,7 @@ class RuleSetDetailScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               if (ruleSet.rules != null)
-                _RuleSummarySection(rules: ruleSet.rules!)
-              else
-                ...RuleCategory.values.map((category) {
-                  final items = grouped[category] ?? const [];
-                  return _CategorySection(category: category, items: items);
-                }),
+                _RuleSummarySection(rules: ruleSet.rules!),
             ],
           ),
         );
@@ -397,80 +386,6 @@ class _ShareRow extends StatelessWidget {
   }
 }
 
-class _CategorySection extends StatelessWidget {
-  const _CategorySection({required this.category, required this.items});
-
-  final RuleCategory category;
-  final List<RuleItem> items;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(category.label, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          if (items.isEmpty)
-            Text(
-              'まだルールが登録されていません。',
-              style: Theme.of(context).textTheme.bodySmall,
-            )
-          else
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final crossAxisCount = constraints.maxWidth >= 900
-                    ? 3
-                    : constraints.maxWidth >= 600
-                        ? 3
-                        : 2;
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    mainAxisExtent: 140,
-                  ),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.title,
-                              style: Theme.of(context).textTheme.titleMedium,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 6),
-                            Expanded(
-                              child: Text(
-                                item.description,
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _RuleSummarySection extends StatelessWidget {
   const _RuleSummarySection({required this.rules});
 
@@ -593,35 +508,45 @@ class _RuleSummaryGroup extends StatelessWidget {
       children: [
         Text(title, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 8),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            mainAxisExtent: 86,
-          ),
-          itemCount: lines.length,
-          itemBuilder: (context, index) {
-            final line = lines[index];
-            return Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(line.label, style: Theme.of(context).textTheme.bodySmall),
-                    const SizedBox(height: 6),
-                    Text(
-                      line.value,
-                      style: Theme.of(context).textTheme.titleMedium,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isLandscape =
+                MediaQuery.of(context).orientation == Orientation.landscape;
+            final width = constraints.maxWidth;
+            final crossAxisCount = isLandscape
+                ? (width >= 740 ? 4 : 3)
+                : (width >= 900 ? 3 : 2);
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                mainAxisExtent: 86,
               ),
+              itemCount: lines.length,
+              itemBuilder: (context, index) {
+                final line = lines[index];
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(line.label, style: Theme.of(context).textTheme.bodySmall),
+                        const SizedBox(height: 6),
+                        Text(
+                          line.value,
+                          style: Theme.of(context).textTheme.titleMedium,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             );
           },
         ),
