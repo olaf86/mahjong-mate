@@ -503,6 +503,9 @@ class _RuleSummaryGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (lines.isEmpty) {
+      return const SizedBox.shrink();
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
