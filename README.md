@@ -4,7 +4,28 @@ A new Flutter project.
 
 ## Firebase Setup
 
-See `docs/firebase_setup.md`.
+See `internal-docs/firebase_setup.md`.
+
+## Internal Docs
+
+Non-public operational/development docs are kept in:
+
+- `internal-docs/account-migration.md`
+- `internal-docs/firebase_setup.md`
+- `internal-docs/share-links.md`
+- `internal-docs/xcode-cloud.md`
+- `internal-docs/github-pages-privacy-policy.md`
+
+## Privacy Policy
+
+Privacy policy document for app store submission:
+
+- `docs/privacy-policy.md`
+- `internal-docs/github-pages-privacy-policy.md` (GitHub Pages publish steps)
+
+When GitHub Pages is enabled with the `docs/` folder, it will be published as:
+
+- `https://<github-user>.github.io/mahjong_mate/privacy-policy.html`
 
 ## Getting Started
 
