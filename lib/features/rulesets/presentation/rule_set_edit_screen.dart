@@ -179,6 +179,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   Widget _buildForm(BuildContext context, String title, RuleSet? ruleSet) {
     final ownerNameAsync = ref.watch(ownerNameProvider);
     final ownerName = ownerNameAsync.asData?.value ?? ownerNameDefaultValue;
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -197,12 +198,44 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             decoration: const InputDecoration(labelText: 'ルールセット名'),
           ),
           const SizedBox(height: 16),
-          InputDecorator(
-            decoration: const InputDecoration(
-              labelText: 'オーナー名',
-              helperText: '設定画面のオーナー名と同期されます。',
-            ),
-            child: Text(ownerName),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('オーナー名', style: theme.textTheme.labelLarge),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: theme.colorScheme.outlineVariant),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lock_outline,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        ownerName,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text('設定画面のオーナー名と同期されます。', style: theme.textTheme.bodySmall),
+            ],
           ),
           const SizedBox(height: 16),
           TextField(
