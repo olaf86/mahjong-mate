@@ -27,6 +27,21 @@ class RuleSet {
   final DateTime? updatedAt;
   final RuleSetRules? rules;
 
+  RuleSet copyWith({String? ownerName}) {
+    return RuleSet(
+      id: id,
+      name: name,
+      description: description,
+      ownerName: ownerName ?? this.ownerName,
+      items: items,
+      shareCode: shareCode,
+      visibility: visibility,
+      ownerUid: ownerUid,
+      updatedAt: updatedAt,
+      rules: rules,
+    );
+  }
+
   bool get isPublic => visibility == RuleSetVisibility.public;
 
   String get updatedAtLabel {
