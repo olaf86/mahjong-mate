@@ -26,7 +26,7 @@
 
 ```yaml
 dependencies:
-  firebase_app_check: ^0.3.2+7
+  firebase_app_check: ^0.4.1+1
 ```
 
 2. `lib/main.dart` の Firebase 初期化直後に App Check 有効化を追加
@@ -36,8 +36,8 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 
 await Firebase.initializeApp();
 await FirebaseAppCheck.instance.activate(
-  androidProvider: AndroidProvider.playIntegrity,
-  appleProvider: AppleProvider.appAttestWithDeviceCheckFallback,
+  providerAndroid: const AndroidPlayIntegrityProvider(),
+  providerApple: const AppleAppAttestWithDeviceCheckFallbackProvider(),
 );
 ```
 
