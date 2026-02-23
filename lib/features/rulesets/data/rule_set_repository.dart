@@ -120,17 +120,24 @@ class RuleSetRepository {
     final docRef = _followsCollection(ownerUid).doc(ruleSetId);
     final existing = await docRef.get();
     if (existing.exists) return;
+    final ruleSetDoc = await _collection.doc(ruleSetId).get();
+    if (!ruleSetDoc.exists) return;
+    final ruleSetOwnerUid = _stringValueOrNull(ruleSetDoc.data()?['ownerUid']);
     final snapshot = await _followsCollection(
       ownerUid,
     ).orderBy('order', descending: true).limit(1).get();
     final nextOrder = snapshot.docs.isEmpty
         ? 0
         : (snapshot.docs.first.data()['order'] as int? ?? 0) + 1;
-    await docRef.set({
+    final payload = <String, dynamic>{
       'order': nextOrder,
       'ruleSetId': ruleSetId,
       'followedAt': FieldValue.serverTimestamp(),
-    });
+    };
+    if (ruleSetOwnerUid != null) {
+      payload['ruleSetOwnerUid'] = ruleSetOwnerUid;
+    }
+    await docRef.set(payload);
   }
 
   Future<void> unfollowRuleSet({

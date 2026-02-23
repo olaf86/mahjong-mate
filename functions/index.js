@@ -4,7 +4,6 @@ const {onCall, HttpsError} = require("firebase-functions/v2/https");
 admin.initializeApp();
 
 const BATCH_LIMIT = 500;
-const IN_QUERY_LIMIT = 10;
 
 async function deleteRefsInBatches(db, refs) {
   let batch = db.batch();
@@ -25,14 +24,6 @@ async function deleteRefsInBatches(db, refs) {
   }
 }
 
-function chunk(array, size) {
-  const chunks = [];
-  for (let i = 0; i < array.length; i += size) {
-    chunks.push(array.slice(i, i + size));
-  }
-  return chunks;
-}
-
 exports.deleteAccountData = onCall(async (request) => {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Authentication required.");
@@ -46,20 +37,18 @@ exports.deleteAccountData = onCall(async (request) => {
         .collection("rule_sets")
         .where("ownerUid", "==", uid)
         .get();
-    const ownedRuleSetIds = ownedSnapshot.docs.map((doc) => doc.id);
 
     if (ownedSnapshot.docs.length > 0) {
       const ownedRefs = ownedSnapshot.docs.map((doc) => doc.ref);
       await deleteRefsInBatches(db, ownedRefs);
     }
 
-    // Remove follow bindings in other users that point to deleted rule sets.
-    for (const ids of chunk(ownedRuleSetIds, IN_QUERY_LIMIT)) {
-      const followsSnapshot = await db
-          .collectionGroup("follows")
-          .where(admin.firestore.FieldPath.documentId(), "in", ids)
-          .get();
-      if (followsSnapshot.docs.length === 0) continue;
+    // Remove follow bindings in other users that point to this owner's rulesets.
+    const followsSnapshot = await db
+        .collectionGroup("follows")
+        .where("ruleSetOwnerUid", "==", uid)
+        .get();
+    if (followsSnapshot.docs.length > 0) {
       const followRefs = followsSnapshot.docs.map((doc) => doc.ref);
       await deleteRefsInBatches(db, followRefs);
     }
@@ -73,7 +62,8 @@ exports.deleteAccountData = onCall(async (request) => {
 
     return {
       success: true,
-      deletedRuleSetCount: ownedRuleSetIds.length,
+      deletedRuleSetCount: ownedSnapshot.docs.length,
+      deletedFollowBindingCount: followsSnapshot.docs.length,
     };
   } catch (error) {
     throw new HttpsError("internal", `Failed to delete account data: ${error}`);
