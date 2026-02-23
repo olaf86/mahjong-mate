@@ -26,6 +26,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   late final TextEditingController _returnPointsController;
   late final TextEditingController _redDoraCountController;
   late final TextEditingController _umaController;
+  late final TextEditingController _freeTextController;
   bool _initialized = false;
   bool _saving = false;
   bool _ownerNameInitialized = false;
@@ -40,6 +41,10 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   RenchanRule _renchan = RenchanRule.oyaTenpai;
   OorasuStopRule _oorasuStop = OorasuStopRule.on;
   GoRenchanTwoHanRule _goRenchanTwoHan = GoRenchanTwoHanRule.off;
+  NagashiManganRule _nagashiMangan = NagashiManganRule.on;
+  ChiitoitsuFourTilesRule _chiitoitsuFourTiles = ChiitoitsuFourTilesRule.off;
+  NishiIriRule _nishiIri = NishiIriRule.on;
+  NishiIriOption _nishiIriOption = NishiIriOption.suddenDeath;
   DoraRule _kandora = DoraRule.on;
   DoraRule _uradora = DoraRule.on;
   bool _redDoraEnabled = true;
@@ -59,6 +64,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
     _returnPointsController = TextEditingController(text: '30000');
     _redDoraCountController = TextEditingController(text: '3');
     _umaController = TextEditingController(text: '20-10');
+    _freeTextController = TextEditingController();
   }
 
   @override
@@ -70,6 +76,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
     _returnPointsController.dispose();
     _redDoraCountController.dispose();
     _umaController.dispose();
+    _freeTextController.dispose();
     super.dispose();
   }
 
@@ -99,6 +106,10 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
         _renchan = rules.renchan;
         _oorasuStop = rules.oorasuStop;
         _goRenchanTwoHan = rules.goRenchanTwoHan;
+        _nagashiMangan = rules.nagashiMangan;
+        _chiitoitsuFourTiles = rules.chiitoitsuFourTiles;
+        _nishiIri = rules.nishiIri;
+        _nishiIriOption = rules.nishiIriOption;
         _kandora = rules.kandora;
         _uradora = rules.uradora;
         _redDoraEnabled = rules.redDora.enabled;
@@ -111,6 +122,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
         _yakumanMultiple = rules.yakuman.allowMultiple;
         _yakumanDouble = rules.yakuman.allowDouble;
         _threeNorthNuki = rules.threePlayer?.northNuki ?? true;
+        _freeTextController.text = rules.freeText;
       }
       if (mounted) {
         setState(() {});
@@ -122,13 +134,14 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   Widget build(BuildContext context) {
     _initializeIfNeeded();
     final ruleSetId = widget.ruleSetId;
-    final ruleSetAsync = ruleSetId == null ? null : ref.watch(ruleSetByIdProvider(ruleSetId));
+    final ruleSetAsync = ruleSetId == null
+        ? null
+        : ref.watch(ruleSetByIdProvider(ruleSetId));
     final ownerUidAsync = ref.watch(ownerUidProvider);
 
     return ruleSetAsync?.when(
-          loading: () => const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          ),
+          loading: () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
           error: (error, _) => Scaffold(
             appBar: AppBar(title: const Text('読み込みに失敗しました')),
             body: Center(child: Text(error.toString())),
@@ -158,11 +171,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
                       ),
                     );
                   }
-                  return _buildForm(
-                    context,
-                    'ルールセット編集',
-                    ruleSet,
-                  );
+                  return _buildForm(context, 'ルールセット編集', ruleSet);
                 },
               );
             }
@@ -183,9 +192,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
       });
     }
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         children: [
@@ -223,7 +230,9 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
               value: _visibility == RuleSetVisibility.public,
               onChanged: (value) {
                 setState(() {
-                  _visibility = value ? RuleSetVisibility.public : RuleSetVisibility.private;
+                  _visibility = value
+                      ? RuleSetVisibility.public
+                      : RuleSetVisibility.private;
                 });
               },
             ),
@@ -240,10 +249,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             title: '対局人数',
             child: _SegmentedPicker<PlayerCount>(
               value: _players,
-              options: const {
-                PlayerCount.four: '4人',
-                PlayerCount.three: '3人',
-              },
+              options: const {PlayerCount.four: '4人', PlayerCount.three: '3人'},
               onChanged: (value) {
                 setState(() {
                   _players = value;
@@ -296,10 +302,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             title: '食いタン',
             child: _SegmentedPicker<KuitanRule>(
               value: _kuitan,
-              options: const {
-                KuitanRule.on: 'あり',
-                KuitanRule.off: 'なし',
-              },
+              options: const {KuitanRule.on: 'あり', KuitanRule.off: 'なし'},
               onChanged: (value) => setState(() => _kuitan = value),
             ),
           ),
@@ -308,9 +311,15 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             child: DropdownButtonFormField<SakizukeRule>(
               value: _sakizuke,
               items: const [
-                DropdownMenuItem(value: SakizukeRule.complete, child: Text('完全先付け')),
+                DropdownMenuItem(
+                  value: SakizukeRule.complete,
+                  child: Text('完全先付け'),
+                ),
                 DropdownMenuItem(value: SakizukeRule.ato, child: Text('後付け')),
-                DropdownMenuItem(value: SakizukeRule.naka, child: Text('中付け（レア）')),
+                DropdownMenuItem(
+                  value: SakizukeRule.naka,
+                  child: Text('中付け（レア）'),
+                ),
               ],
               onChanged: (value) {
                 if (value == null) return;
@@ -351,6 +360,59 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
               onChanged: (value) => setState(() => _goRenchanTwoHan = value),
             ),
           ),
+          _RuleCard(
+            title: '流し満貫',
+            child: _SegmentedPicker<NagashiManganRule>(
+              value: _nagashiMangan,
+              options: const {
+                NagashiManganRule.on: 'あり',
+                NagashiManganRule.off: 'なし',
+              },
+              onChanged: (value) => setState(() => _nagashiMangan = value),
+            ),
+          ),
+          _RuleCard(
+            title: '七対子４枚使い',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _SegmentedPicker<ChiitoitsuFourTilesRule>(
+                  value: _chiitoitsuFourTiles,
+                  options: const {
+                    ChiitoitsuFourTilesRule.on: 'あり',
+                    ChiitoitsuFourTilesRule.off: 'なし',
+                  },
+                  onChanged: (value) =>
+                      setState(() => _chiitoitsuFourTiles = value),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '※ 七対子はチートイツと読みます。',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          _RuleCard(
+            title: '西入',
+            child: _SegmentedPicker<NishiIriRule>(
+              value: _nishiIri,
+              options: const {NishiIriRule.on: 'あり', NishiIriRule.off: 'なし'},
+              onChanged: (value) => setState(() => _nishiIri = value),
+            ),
+          ),
+          if (_nishiIri == NishiIriRule.on)
+            _RuleCard(
+              title: '西入時の進行',
+              child: _SegmentedPicker<NishiIriOption>(
+                value: _nishiIriOption,
+                options: const {
+                  NishiIriOption.suddenDeath: 'サドンデス',
+                  NishiIriOption.untilWestRoundEnd: '西場終了まで続行',
+                },
+                onChanged: (value) => setState(() => _nishiIriOption = value),
+              ),
+            ),
           const SizedBox(height: 20),
           Text('ゲーム終了条件', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 8),
@@ -394,10 +456,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             title: 'カンドラ',
             child: _SegmentedPicker<DoraRule>(
               value: _kandora,
-              options: const {
-                DoraRule.on: 'あり',
-                DoraRule.off: 'なし',
-              },
+              options: const {DoraRule.on: 'あり', DoraRule.off: 'なし'},
               onChanged: (value) => setState(() => _kandora = value),
             ),
           ),
@@ -405,10 +464,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             title: '裏ドラ',
             child: _SegmentedPicker<DoraRule>(
               value: _uradora,
-              options: const {
-                DoraRule.on: 'あり',
-                DoraRule.off: 'なし',
-              },
+              options: const {DoraRule.on: 'あり', DoraRule.off: 'なし'},
               onChanged: (value) => setState(() => _uradora = value),
             ),
           ),
@@ -463,10 +519,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
               title: '北抜き',
               child: _SegmentedPicker<bool>(
                 value: _threeNorthNuki,
-                options: const {
-                  true: 'あり',
-                  false: 'なし',
-                },
+                options: const {true: 'あり', false: 'なし'},
                 onChanged: (value) => setState(() => _threeNorthNuki = value),
               ),
             ),
@@ -477,9 +530,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             title: 'ウマ',
             child: TextField(
               controller: _umaController,
-              decoration: const InputDecoration(
-                hintText: '例: 20-10',
-              ),
+              decoration: const InputDecoration(hintText: '例: 20-10'),
             ),
           ),
           _RuleCard(
@@ -504,7 +555,8 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
                   contentPadding: EdgeInsets.zero,
                   title: const Text('複合役満を認める'),
                   value: _yakumanMultiple,
-                  onChanged: (value) => setState(() => _yakumanMultiple = value),
+                  onChanged: (value) =>
+                      setState(() => _yakumanMultiple = value),
                 ),
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
@@ -513,6 +565,19 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
                   onChanged: (value) => setState(() => _yakumanDouble = value),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text('自由入力', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          _RuleCard(
+            title: '自由入力欄',
+            child: TextField(
+              controller: _freeTextController,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                hintText: '独自のローカルルールなどを自由に記述できます。',
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -528,9 +593,9 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   Future<void> _save(RuleSet? ruleSet) async {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ルールセット名を入力してください。')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ルールセット名を入力してください。')));
       return;
     }
 
@@ -540,7 +605,8 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
 
     try {
       final description = _descriptionController.text.trim();
-      final fallbackOwnerName = ref.read(ownerNameProvider).value ?? ownerNameDefaultValue;
+      final fallbackOwnerName =
+          ref.read(ownerNameProvider).value ?? ownerNameDefaultValue;
       final ownerName = _ownerNameController.text.trim().isEmpty
           ? fallbackOwnerName
           : _ownerNameController.text.trim();
@@ -570,6 +636,10 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
         renchan: _renchan,
         oorasuStop: _oorasuStop,
         goRenchanTwoHan: _goRenchanTwoHan,
+        nagashiMangan: _nagashiMangan,
+        chiitoitsuFourTiles: _chiitoitsuFourTiles,
+        nishiIri: _nishiIri,
+        nishiIriOption: _nishiIriOption,
         kandora: _kandora,
         uradora: _uradora,
         redDora: RedDoraRule(
@@ -587,8 +657,10 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           allowMultiple: _yakumanMultiple,
           allowDouble: _yakumanDouble,
         ),
-        threePlayer:
-            _players == PlayerCount.three ? ThreePlayerRules(northNuki: _threeNorthNuki) : null,
+        threePlayer: _players == PlayerCount.three
+            ? ThreePlayerRules(northNuki: _threeNorthNuki)
+            : null,
+        freeText: _freeTextController.text.trim(),
       );
 
       if (ruleSet == null) {
@@ -606,10 +678,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           ruleSetId: created.id,
         );
         if (!mounted) return;
-        context.goNamed(
-          'ruleset-detail',
-          pathParameters: {'id': created.id},
-        );
+        context.goNamed('ruleset-detail', pathParameters: {'id': created.id});
       } else {
         await repository.updateRuleSet(
           id: ruleSet.id,
@@ -623,16 +692,13 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           rules: rules,
         );
         if (!mounted) return;
-        context.goNamed(
-          'ruleset-detail',
-          pathParameters: {'id': ruleSet.id},
-        );
+        context.goNamed('ruleset-detail', pathParameters: {'id': ruleSet.id});
       }
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('保存に失敗しました: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('保存に失敗しました: $error')));
     } finally {
       if (mounted) {
         setState(() {
@@ -703,10 +769,8 @@ class _SegmentedPicker<T> extends StatelessWidget {
     return SegmentedButton<T>(
       segments: options.entries
           .map(
-            (entry) => ButtonSegment<T>(
-              value: entry.key,
-              label: Text(entry.value),
-            ),
+            (entry) =>
+                ButtonSegment<T>(value: entry.key, label: Text(entry.value)),
           )
           .toList(),
       selected: {value},
