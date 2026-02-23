@@ -192,7 +192,15 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
       });
     }
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(title),
+        actions: [
+          TextButton(
+            onPressed: _saving ? null : () => _save(ruleSet),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
         children: [
