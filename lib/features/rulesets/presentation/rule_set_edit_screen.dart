@@ -385,11 +385,6 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
                   onChanged: (value) =>
                       setState(() => _chiitoitsuFourTiles = value),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  '※ 七対子はチートイツと読みます。',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
               ],
             ),
           ),
