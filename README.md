@@ -11,6 +11,7 @@ See `internal-docs/firebase_setup.md`.
 Non-public operational/development docs are kept in:
 
 - `internal-docs/account-migration.md`
+- `internal-docs/app-check-monitoring.md`
 - `internal-docs/firebase_setup.md`
 - `internal-docs/share-links.md`
 - `internal-docs/xcode-cloud.md`
