@@ -73,7 +73,10 @@ class RuleSetListScreen extends ConsumerWidget {
                       ),
                       IconButton(
                         onPressed: () => context.pushNamed('followed-order'),
-                        icon: Icon(Icons.swap_vert_circle_outlined, color: iconColor),
+                        icon: Icon(
+                          Icons.swap_vert_circle_outlined,
+                          color: iconColor,
+                        ),
                         tooltip: '並び替え',
                       ),
                       IconButton(
@@ -91,21 +94,19 @@ class RuleSetListScreen extends ConsumerWidget {
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
                     sliver: SliverList(
-                      delegate: SliverChildListDelegate(
-                        [
-                          Text(
-                            '麻雀ルールを仲間と共有しよう',
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          ),
-                          const SizedBox(height: 14),
-                          OutlinedButton.icon(
-                            onPressed: () => _openShareCodeDialog(context),
-                            icon: const Icon(Icons.key),
-                            label: const Text('共有コードで開く'),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
-                      ),
+                      delegate: SliverChildListDelegate([
+                        Text(
+                          '麻雀ルールを仲間と共有しよう',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                        const SizedBox(height: 14),
+                        OutlinedButton.icon(
+                          onPressed: () => _openShareCodeDialog(context),
+                          icon: const Icon(Icons.key),
+                          label: const Text('共有コードで開く'),
+                        ),
+                        const SizedBox(height: 24),
+                      ]),
                     ),
                   ),
                   if (items.isEmpty)
@@ -118,7 +119,9 @@ class RuleSetListScreen extends ConsumerWidget {
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
                       sliver: SliverList(
                         delegate: SliverChildListDelegate(
-                          items.map((ruleSet) => _RuleSetCard(ruleSet: ruleSet)).toList(),
+                          items
+                              .map((ruleSet) => _RuleSetCard(ruleSet: ruleSet))
+                              .toList(),
                         ),
                       ),
                     ),
@@ -181,9 +184,9 @@ class RuleSetListScreen extends ConsumerWidget {
   Future<void> _openDonation(BuildContext context) async {
     if (!await launchUrl(_donationUrl, mode: LaunchMode.externalApplication)) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ブラウザを開けませんでした。')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ブラウザを開けませんでした。')));
     }
   }
 }
@@ -225,7 +228,11 @@ class _RuleSetCard extends StatelessWidget {
                       ),
                     ),
                     if (ruleSet.isPublic)
-                      const Icon(Icons.public, size: 18, color: Color(0xFF0F6B6B)),
+                      const Icon(
+                        Icons.public,
+                        size: 18,
+                        color: Color(0xFF0F6B6B),
+                      ),
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -251,7 +258,9 @@ class _RuleSetCard extends StatelessWidget {
                       spacing: 8,
                       runSpacing: 8,
                       alignment: WrapAlignment.center,
-                      children: tiles.map((tile) => _RuleTile(tile: tile)).toList(),
+                      children: tiles
+                          .map((tile) => _RuleTile(tile: tile))
+                          .toList(),
                     ),
                   ),
                 const SizedBox(height: 12),
@@ -280,10 +289,7 @@ class _RuleSetCard extends StatelessWidget {
                     ),
                     if (ruleSet.shareCode != null) ...[
                       const SizedBox(height: 6),
-                      Text(
-                        '共有コード ${ruleSet.shareCode}',
-                        softWrap: true,
-                      ),
+                      Text('共有コード ${ruleSet.shareCode}', softWrap: true),
                     ],
                   ],
                 ),
@@ -300,7 +306,8 @@ class _RuleSetCard extends StatelessWidget {
     final isThreePlayer = rules.players == PlayerCount.three;
     final standardStarting = isThreePlayer ? 35000 : 25000;
     final standardReturn = isThreePlayer ? 40000 : 30000;
-    final standardOka = (standardReturn - standardStarting) * (isThreePlayer ? 3 : 4);
+    final standardOka =
+        (standardReturn - standardStarting) * (isThreePlayer ? 3 : 4);
 
     tiles.addAll([
       _RuleTileData(
@@ -356,7 +363,8 @@ class _RuleSetCard extends StatelessWidget {
       _RuleTileData(
         label: 'ﾄﾞﾗ',
         value: _doraLabel(rules),
-        isStandard: rules.kandora == DoraRule.on &&
+        isStandard:
+            rules.kandora == DoraRule.on &&
             rules.uradora == DoraRule.on &&
             rules.redDora.enabled &&
             rules.redDora.count == 3,
@@ -379,7 +387,9 @@ class _RuleSetCard extends StatelessWidget {
       ),
       _RuleTileData(
         label: '立棒',
-        value: rules.score.riichiStick == RiichiStickRule.topTake ? 'トップ' : '均等',
+        value: rules.score.riichiStick == RiichiStickRule.topTake
+            ? 'トップ'
+            : '均等',
         isStandard: rules.score.riichiStick == RiichiStickRule.topTake,
       ),
       _RuleTileData(
@@ -391,6 +401,25 @@ class _RuleSetCard extends StatelessWidget {
         label: 'ｵｰﾗｽ止',
         value: rules.oorasuStop == OorasuStopRule.on ? 'あり' : 'なし',
         isStandard: rules.oorasuStop == OorasuStopRule.on,
+      ),
+      _RuleTileData(
+        label: '流し満',
+        value: rules.nagashiMangan == NagashiManganRule.on ? 'あり' : 'なし',
+        isStandard: rules.nagashiMangan == NagashiManganRule.on,
+      ),
+      _RuleTileData(
+        label: '七対4枚',
+        value: rules.chiitoitsuFourTiles == ChiitoitsuFourTilesRule.on
+            ? 'あり'
+            : 'なし',
+        isStandard: rules.chiitoitsuFourTiles == ChiitoitsuFourTilesRule.off,
+      ),
+      _RuleTileData(
+        label: '西入',
+        value: _nishiIriLabel(rules),
+        isStandard:
+            rules.nishiIri == NishiIriRule.on &&
+            rules.nishiIriOption == NishiIriOption.suddenDeath,
       ),
     ]);
 
@@ -441,6 +470,12 @@ class _RuleSetCard extends StatelessWidget {
     return labels.join('・');
   }
 
+  String _nishiIriLabel(RuleSetRules rules) {
+    if (rules.nishiIri == NishiIriRule.off) return 'なし';
+    if (rules.nishiIriOption == NishiIriOption.suddenDeath) return 'ｻﾄﾞﾝ';
+    return '西場まで';
+  }
+
   int _calcOka(RuleSetRules rules) {
     final players = rules.players == PlayerCount.three ? 3 : 4;
     return (rules.score.returnPoints - rules.startingPoints) * players;
@@ -449,7 +484,6 @@ class _RuleSetCard extends StatelessWidget {
   String _normalizeUma(String value) {
     return value.replaceAll(' ', '').trim();
   }
-
 }
 
 class _SharePrefixIcon extends StatelessWidget {
@@ -484,9 +518,9 @@ class _MiniTag extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: const Color(0xFF3A2F25),
-              fontWeight: FontWeight.w600,
-            ),
+          color: const Color(0xFF3A2F25),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -511,9 +545,15 @@ class _RuleTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final background = tile.isStandard ? const Color(0xFFE6F0E8) : const Color(0xFFF6EAE1);
-    final border = tile.isStandard ? const Color(0xFFD1E0D5) : const Color(0xFFE6CDBB);
-    final textColor = tile.isStandard ? const Color(0xFF2D3F33) : const Color(0xFF4F3A2A);
+    final background = tile.isStandard
+        ? const Color(0xFFE6F0E8)
+        : const Color(0xFFF6EAE1);
+    final border = tile.isStandard
+        ? const Color(0xFFD1E0D5)
+        : const Color(0xFFE6CDBB);
+    final textColor = tile.isStandard
+        ? const Color(0xFF2D3F33)
+        : const Color(0xFF4F3A2A);
 
     return Container(
       width: 72,
@@ -533,10 +573,10 @@ class _RuleTile extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                  height: 1.1,
-                ),
+              color: textColor,
+              fontWeight: FontWeight.w600,
+              height: 1.1,
+            ),
           ),
           const SizedBox(height: 3),
           Text(
@@ -545,10 +585,10 @@ class _RuleTile extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                  height: 1.1,
-                ),
+              color: textColor,
+              fontWeight: FontWeight.w700,
+              height: 1.1,
+            ),
           ),
         ],
       ),
@@ -567,7 +607,10 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('フォロー中のルールセットがありません。', style: Theme.of(context).textTheme.titleLarge),
+            Text(
+              'フォロー中のルールセットがありません。',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
             const SizedBox(height: 8),
             Text(
               '共有コードを入力してルールセットをフォローしてください。',

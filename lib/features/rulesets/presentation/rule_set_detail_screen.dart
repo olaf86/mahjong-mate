@@ -20,9 +20,8 @@ class RuleSetDetailScreen extends ConsumerWidget {
     final ruleSetAsync = ref.watch(ruleSetByIdProvider(ruleSetId));
 
     return ruleSetAsync.when(
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, _) => Scaffold(
         appBar: AppBar(title: const Text('読み込みに失敗しました')),
         body: Center(child: Text(error.toString())),
@@ -36,7 +35,8 @@ class RuleSetDetailScreen extends ConsumerWidget {
         }
 
         final followedIdsAsync = ref.watch(followedRuleSetIdsProvider);
-        final isFollowed = followedIdsAsync.value?.contains(ruleSet.id) ?? false;
+        final isFollowed =
+            followedIdsAsync.value?.contains(ruleSet.id) ?? false;
         final ownerUidAsync = ref.watch(ownerUidProvider);
         final ownerUid = ownerUidAsync.value;
         final isOwner = ownerUid != null && ruleSet.ownerUid == ownerUid;
@@ -114,9 +114,7 @@ Future<void> _toggleFollow(
       builder: (context) {
         return AlertDialog(
           title: const Text('フォロー解除の確認'),
-          content: const Text(
-            'フォローを解除すると、このルールセットは一覧で表示されなくなります。よろしいでしょうか？',
-          ),
+          content: const Text('フォローを解除すると、このルールセットは一覧で表示されなくなります。よろしいでしょうか？'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
@@ -238,7 +236,8 @@ class _HeaderCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 12),
                       TextButton(
-                        onPressed: () => _openShareSheet(context, shareCode!, shareUrl!),
+                        onPressed: () =>
+                            _openShareSheet(context, shareCode!, shareUrl!),
                         style: TextButton.styleFrom(
                           padding: EdgeInsets.zero,
                           minimumSize: Size.zero,
@@ -274,7 +273,11 @@ class _HeaderCard extends StatelessWidget {
     );
   }
 
-  void _openShareSheet(BuildContext context, String shareCode, String shareUrl) {
+  void _openShareSheet(
+    BuildContext context,
+    String shareCode,
+    String shareUrl,
+  ) {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -328,9 +331,9 @@ class _HeaderCard extends StatelessWidget {
   Future<void> _copyText(BuildContext context, String value) async {
     await Clipboard.setData(ClipboardData(text: value));
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('コピーしました')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('コピーしました')));
   }
 }
 
@@ -360,11 +363,7 @@ class _ShareRow extends StatelessWidget {
                 children: [
                   Text(label, style: Theme.of(context).textTheme.labelSmall),
                   const SizedBox(height: 4),
-                  Text(
-                    value,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Text(value, maxLines: 2, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
@@ -395,14 +394,11 @@ class _RuleSummarySection extends StatelessWidget {
   Widget build(BuildContext context) {
     final lines = <_RuleLine>[
       _RuleLine('対局人数', rules.players == PlayerCount.four ? '4人' : '3人'),
-      _RuleLine(
-        '対局形式',
-        switch (rules.matchType) {
-          MatchType.tonpuu => '東風',
-          MatchType.tonnan => '東南',
-          MatchType.isshou => '一荘',
-        },
-      ),
+      _RuleLine('対局形式', switch (rules.matchType) {
+        MatchType.tonpuu => '東風',
+        MatchType.tonnan => '東南',
+        MatchType.isshou => '一荘',
+      }),
       _RuleLine('持ち点', '${rules.startingPoints}点'),
       _RuleLine('返し点', '${rules.score.returnPoints}点'),
       _RuleLine('オカ', '${rules.score.oka}点'),
@@ -415,14 +411,11 @@ class _RuleSummarySection extends StatelessWidget {
         rules.boxTenBehavior == BoxTenBehavior.end ? '終了' : '続行',
       ),
       _RuleLine('食いタン', rules.kuitan == KuitanRule.on ? 'あり' : 'なし'),
-      _RuleLine(
-        '先付け',
-        switch (rules.sakizuke) {
-          SakizukeRule.complete => '完全先付け',
-          SakizukeRule.ato => '後付け',
-          SakizukeRule.naka => '中付け',
-        },
-      ),
+      _RuleLine('先付け', switch (rules.sakizuke) {
+        SakizukeRule.complete => '完全先付け',
+        SakizukeRule.ato => '後付け',
+        SakizukeRule.naka => '中付け',
+      }),
       _RuleLine(
         '頭ハネ/ダブロン',
         rules.headBump == HeadBumpRule.atama ? '頭ハネ' : 'ダブロン',
@@ -436,6 +429,22 @@ class _RuleSummarySection extends StatelessWidget {
         '5本場以上2翻縛り',
         rules.goRenchanTwoHan == GoRenchanTwoHanRule.on ? 'あり' : 'なし',
       ),
+      _RuleLine(
+        '流し満貫',
+        rules.nagashiMangan == NagashiManganRule.on ? 'あり' : 'なし',
+      ),
+      _RuleLine(
+        '七対子４枚使い',
+        rules.chiitoitsuFourTiles == ChiitoitsuFourTilesRule.on ? 'あり' : 'なし',
+      ),
+      _RuleLine('西入', rules.nishiIri == NishiIriRule.on ? 'あり' : 'なし'),
+      if (rules.nishiIri == NishiIriRule.on)
+        _RuleLine(
+          '西入時の進行',
+          rules.nishiIriOption == NishiIriOption.suddenDeath
+              ? 'サドンデス'
+              : '西場終了まで続行',
+        ),
     ];
 
     final doraLines = <_RuleLine>[
@@ -449,22 +458,21 @@ class _RuleSummarySection extends StatelessWidget {
         '特殊ドラ',
         rules.specialDora.isEmpty
             ? 'なし'
-            : rules.specialDora.map((d) {
-                switch (d) {
-                  case SpecialDora.gold:
-                    return '金ドラ';
-                  case SpecialDora.hana:
-                    return '花牌';
-                  case SpecialDora.nuki:
-                    return '抜きドラ';
-                }
-              }).join(' / '),
+            : rules.specialDora
+                  .map((d) {
+                    switch (d) {
+                      case SpecialDora.gold:
+                        return '金ドラ';
+                      case SpecialDora.hana:
+                        return '花牌';
+                      case SpecialDora.nuki:
+                        return '抜きドラ';
+                    }
+                  })
+                  .join(' / '),
       ),
       if (rules.players == PlayerCount.three)
-        _RuleLine(
-          '北抜き',
-          (rules.threePlayer?.northNuki ?? false) ? 'あり' : 'なし',
-        ),
+        _RuleLine('北抜き', (rules.threePlayer?.northNuki ?? false) ? 'あり' : 'なし'),
     ];
 
     final scoreLines = <_RuleLine>[
@@ -490,6 +498,34 @@ class _RuleSummarySection extends StatelessWidget {
         _RuleSummaryGroup(title: '得点配分（精算）', lines: scoreLines),
         const SizedBox(height: 16),
         _RuleSummaryGroup(title: '役満・特殊扱い', lines: advancedLines),
+        const SizedBox(height: 16),
+        _FreeTextSection(text: rules.freeText),
+      ],
+    );
+  }
+}
+
+class _FreeTextSection extends StatelessWidget {
+  const _FreeTextSection({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('自由入力', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 8),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              text.trim().isEmpty ? '未入力' : text.trim(),
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -537,7 +573,10 @@ class _RuleSummaryGroup extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(line.label, style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          line.label,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                         const SizedBox(height: 6),
                         Text(
                           line.value,
