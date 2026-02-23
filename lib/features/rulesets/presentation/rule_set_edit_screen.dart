@@ -394,7 +394,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             ),
           ),
           _RuleCard(
-            title: 'ShaNyu（シャーニュウ）',
+            title: '西入',
             child: _SegmentedPicker<ShaNyuRule>(
               value: _shaNyu,
               options: const {ShaNyuRule.on: 'あり', ShaNyuRule.off: 'なし'},
@@ -403,7 +403,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           ),
           if (_shaNyu == ShaNyuRule.on)
             _RuleCard(
-              title: 'ShaNyu時の進行',
+              title: '西入時の進行',
               child: _SegmentedPicker<ShaNyuOption>(
                 value: _shaNyuOption,
                 options: const {

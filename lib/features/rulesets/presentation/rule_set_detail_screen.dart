@@ -437,10 +437,10 @@ class _RuleSummarySection extends StatelessWidget {
         '七対子４枚使い',
         rules.chiitoitsuFourTiles == ChiitoitsuFourTilesRule.on ? 'あり' : 'なし',
       ),
-      _RuleLine('ShaNyu（シャーニュウ）', rules.shaNyu == ShaNyuRule.on ? 'あり' : 'なし'),
+      _RuleLine('西入', rules.shaNyu == ShaNyuRule.on ? 'あり' : 'なし'),
       if (rules.shaNyu == ShaNyuRule.on)
         _RuleLine(
-          'ShaNyu時の進行',
+          '西入時の進行',
           rules.shaNyuOption == ShaNyuOption.suddenDeath ? 'サドンデス' : '西場終了まで続行',
         ),
     ];

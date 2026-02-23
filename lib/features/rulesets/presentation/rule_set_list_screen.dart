@@ -415,7 +415,7 @@ class _RuleSetCard extends StatelessWidget {
         isStandard: rules.chiitoitsuFourTiles == ChiitoitsuFourTilesRule.off,
       ),
       _RuleTileData(
-        label: 'ShaNyu',
+        label: '西入',
         value: _shaNyuLabel(rules),
         isStandard:
             rules.shaNyu == ShaNyuRule.on &&
