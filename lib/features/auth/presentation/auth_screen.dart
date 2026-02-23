@@ -48,78 +48,95 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   Widget build(BuildContext context) {
     final auth = ref.watch(firebaseAuthProvider);
     final user = auth.currentUser;
+    final theme = Theme.of(context);
+    final isAnonymousSession = user?.isAnonymous ?? false;
+    final canUseCredentialAuth = user == null || isAnonymousSession;
+    final canDeleteAccount = user != null && !isAnonymousSession;
 
     return Scaffold(
       appBar: AppBar(title: const Text('認証')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         children: [
-          Text(
-            user == null
-                ? 'ログイン状態を確認中です。'
-                : user.isAnonymous
-                ? '未登録'
-                : user.emailVerified
-                ? 'ログイン中: ${user.email ?? 'メール未設定'}'
-                : '未認証: ${user.email ?? 'メール未設定'}',
-            style: Theme.of(context).textTheme.bodyMedium,
+          Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('現在の認証状態', style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Text(
+                    _authStatusLabel(user),
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: 12),
-          AutofillGroup(
-            child: Column(
+          if (canUseCredentialAuth) ...[
+            const SizedBox(height: 16),
+            Text('アカウント登録 / ログイン', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            AutofillGroup(
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.email],
+                    decoration: const InputDecoration(labelText: 'メールアドレス'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    enableSuggestions: false,
+                    autocorrect: false,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const [AutofillHints.newPassword],
+                    decoration: const InputDecoration(
+                      labelText: 'パスワード',
+                      helperText: '8文字以上・英大文字/英小文字/数字を含めてください。',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
               children: [
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(labelText: 'メールアドレス'),
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _authBusy
+                        ? null
+                        : () => _registerAccount(context, auth, user),
+                    child: const Text('登録する'),
+                  ),
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  enableSuggestions: false,
-                  autocorrect: false,
-                  textInputAction: TextInputAction.done,
-                  autofillHints: const [AutofillHints.newPassword],
-                  decoration: const InputDecoration(
-                    labelText: 'パスワード',
-                    helperText: '8文字以上・英大文字/英小文字/数字を含めてください。',
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _authBusy
+                        ? null
+                        : () => _signIn(context, auth, user),
+                    child: const Text('ログイン'),
                   ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _authBusy
-                      ? null
-                      : () => _registerAccount(context, auth, user),
-                  child: const Text('登録する'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton(
-                  onPressed: _authBusy
-                      ? null
-                      : () => _signIn(context, auth, user),
-                  child: const Text('ログイン'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '登録はこの端末のデータを引き継ぐための操作です。'
-            '既存アカウントに切り替える場合はログインをご利用ください。',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          if (user != null && !user.isAnonymous) ...[
+            const SizedBox(height: 8),
+            Text(
+              '登録はこの端末の匿名データを引き継ぐ操作です。'
+              '既存アカウントに切り替える場合はログインを利用してください。',
+              style: theme.textTheme.bodySmall,
+            ),
+          ],
+          if (user != null && !isAnonymousSession) ...[
+            const SizedBox(height: 16),
+            Text('ログイン中の操作', style: theme.textTheme.titleLarge),
             const SizedBox(height: 12),
             if (!user.emailVerified) ...[
               Row(
@@ -152,26 +169,31 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             ),
           ],
           const SizedBox(height: 24),
-          Text('アカウント削除', style: Theme.of(context).textTheme.titleLarge),
+          Text('アカウント削除', style: theme.textTheme.titleLarge),
           const SizedBox(height: 8),
           Card(
             margin: EdgeInsets.zero,
+            color: theme.colorScheme.errorContainer.withValues(alpha: 0.45),
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    user != null && !user.isAnonymous
-                        ? '登録済みアカウントを削除します。'
+                    canDeleteAccount
+                        ? '登録済みアカウントを削除します。削除後は復元できません。'
                         : '未登録（匿名）状態では削除操作は不要です。',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: theme.textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: _authBusy || user == null || user.isAnonymous
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: theme.colorScheme.error,
+                      foregroundColor: theme.colorScheme.onError,
+                    ),
+                    onPressed: _authBusy || !canDeleteAccount
                         ? null
-                        : () => _confirmAndDeleteAccount(context, auth, user),
+                        : () => _confirmAndDeleteAccount(context, auth),
                     icon: const Icon(Icons.delete_outline),
                     label: const Text('アカウントを削除'),
                   ),
@@ -296,29 +318,54 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   Future<void> _confirmAndDeleteAccount(
     BuildContext context,
     FirebaseAuth auth,
-    User user,
   ) async {
+    final confirmController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: const Text('アカウント削除の確認'),
-          content: const Text(
-            'アカウントを削除します。作成したルールセットやフォロー中のルールセットなどが全てクリアされますが、本当によろしいでしょうか？',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('キャンセル'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('削除する'),
-            ),
-          ],
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final canDelete = confirmController.text.trim() == '削除する';
+            return AlertDialog(
+              title: const Text('アカウント削除の確認'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'アカウントを削除します。作成したルールセットやフォロー中のルールセットなどが全てクリアされますが、本当によろしいでしょうか？',
+                  ),
+                  const SizedBox(height: 12),
+                  const Text('確認のため「削除する」と入力してください。'),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: confirmController,
+                    onChanged: (_) => setDialogState(() {}),
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      hintText: '削除する',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(false),
+                  child: const Text('キャンセル'),
+                ),
+                FilledButton(
+                  onPressed: canDelete
+                      ? () => Navigator.of(context).pop(true)
+                      : null,
+                  child: const Text('削除する'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
+    confirmController.dispose();
 
     if (confirmed != true) return;
     await _deleteAccount(context, auth);
@@ -413,6 +460,19 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  String _authStatusLabel(User? user) {
+    if (user == null) {
+      return 'ログイン状態を確認中です。';
+    }
+    if (user.isAnonymous) {
+      return '匿名ログイン中（ローカル作業モード）';
+    }
+    if (user.emailVerified) {
+      return 'メールアカウントでログイン中: ${user.email ?? 'メール未設定'}';
+    }
+    return 'メールアカウント未認証: ${user.email ?? 'メール未設定'}';
   }
 
   String _authErrorMessage(FirebaseAuthException error) {
