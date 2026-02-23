@@ -7,6 +7,8 @@
   },
   "scripts": {
     "lint": "echo \"no lint configured\"",
+    "test": "npm run test:integration",
+    "test:integration": "cd .. && firebase emulators:exec --project mahjong-mate-app --only auth,firestore,functions \"node --test functions/test/integration/deleteAccountData.test.js\"",
     "serve": "firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions"
   },
