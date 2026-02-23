@@ -78,4 +78,4 @@
 
 本ポリシーに関するお問い合わせは、以下までご連絡ください。
 
-- GitHub Issues: [https://github.com/olaf86/mahjong_mate/issues](https://github.com/olaf86/mahjong_mate/issues)
+- [GitHub Issues](https://github.com/olaf86/mahjong-mate/issues)
