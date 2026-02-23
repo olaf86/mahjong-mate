@@ -20,12 +20,12 @@ Non-public operational/development docs are kept in:
 
 Privacy policy document for app store submission:
 
-- `docs/privacy-policy.md`
+- `docs/mahjong-mate/privacy-policy.md`
 - `internal-docs/github-pages-privacy-policy.md` (GitHub Pages publish steps)
 
 When GitHub Pages is enabled with the `docs/` folder, it will be published as:
 
-- `https://<github-user>.github.io/mahjong_mate/privacy-policy.html`
+- `https://<custom-domain>/mahjong-mate/privacy-policy.html`
 
 ## Getting Started
 

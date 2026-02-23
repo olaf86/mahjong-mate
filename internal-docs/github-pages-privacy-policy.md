@@ -1,11 +1,11 @@
 # GitHub Pages でプライバシーポリシーを公開する手順
 
-この手順は、`docs/privacy-policy.md` を GitHub Pages で公開し、Google Play Console のプライバシーポリシー URL に設定するまでを対象にしています。
+この手順は、`docs/mahjong-mate/privacy-policy.md` を GitHub Pages で公開し、Google Play Console のプライバシーポリシー URL に設定するまでを対象にしています。
 
 ## 前提
 
 - GitHub リポジトリ: `olaf86/mahjong_mate`
-- 公開したいファイル: `docs/privacy-policy.md`
+- 公開したいファイル: `docs/mahjong-mate/privacy-policy.md`
 - ブランチ: `main`（公開元として利用）
 
 ## 1. 変更を main に反映する
@@ -14,7 +14,7 @@
 2. GitHub に Push する
 3. Pull Request を作成して `main` にマージする
 
-`docs/privacy-policy.md` が `main` に存在していることを確認してください。
+`docs/mahjong-mate/privacy-policy.md` が `main` に存在していることを確認してください。
 
 ## 2. GitHub Pages を有効化する
 
@@ -31,7 +31,7 @@
 
 このリポジトリ構成では、以下の URL で公開されます。
 
-- `https://olaf86.github.io/mahjong_mate/privacy-policy.html`
+- `https://<custom-domain>/mahjong-mate/privacy-policy.html`
 
 確認ポイント:
 
@@ -45,12 +45,12 @@
 2. 対象アプリを選択
 3. `アプリのコンテンツ`（またはポリシー関連設定）を開く
 4. プライバシーポリシー URL に下記を入力
-   - `https://olaf86.github.io/mahjong_mate/privacy-policy.html`
+   - `https://<custom-domain>/mahjong-mate/privacy-policy.html`
 5. 保存して審査提出フローを進める
 
 ## 5. 文面を更新するときの運用
 
-1. `docs/privacy-policy.md` を更新
+1. `docs/mahjong-mate/privacy-policy.md` を更新
 2. `main` にマージ
 3. 数分待って同一 URL で反映確認
 
@@ -65,4 +65,3 @@ URL は変えずに運用するのが推奨です。
 - 古い内容が表示される:
   - ブラウザのキャッシュを削除して再読込
   - `main` に変更がマージ済みか確認
-
