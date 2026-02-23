@@ -15,28 +15,7 @@ class OwnerNameNotifier extends AsyncNotifier<String> {
   @override
   Future<String> build() async {
     final prefs = await SharedPreferences.getInstance();
-    final local = prefs.getString(_ownerNameKey) ?? ownerNameDefaultValue;
-    try {
-      final ownerUid = await ref.read(ownerUidProvider.future);
-      final docRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(ownerUid);
-      final snapshot = await docRef.get();
-      final remote = _stringValue(snapshot.data()?['ownerName']);
-      if (remote.isNotEmpty) {
-        if (remote != local) {
-          await prefs.setString(_ownerNameKey, remote);
-        }
-        return remote;
-      }
-      await docRef.set({
-        'ownerName': local,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    } catch (_) {
-      // Use local fallback on Firestore/network errors.
-    }
-    return local;
+    return prefs.getString(_ownerNameKey) ?? ownerNameDefaultValue;
   }
 
   Future<void> setOwnerName(String name) async {
@@ -46,20 +25,44 @@ class OwnerNameNotifier extends AsyncNotifier<String> {
     await prefs.setString(_ownerNameKey, value);
     try {
       final ownerUid = await ref.read(ownerUidProvider.future);
-      await FirebaseFirestore.instance.collection('users').doc(ownerUid).set({
-        'ownerName': value,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      await _syncOwnerNameToRuleSets(ownerUid: ownerUid, ownerName: value);
     } catch (_) {
       // Keep local save even if remote sync fails.
     }
     state = AsyncData(value);
   }
 
-  String _stringValue(Object? raw) {
-    if (raw is String) {
-      return raw.trim();
+  Future<void> _syncOwnerNameToRuleSets({
+    required String ownerUid,
+    required String ownerName,
+  }) async {
+    final firestore = FirebaseFirestore.instance;
+    final snapshot = await firestore
+        .collection('rule_sets')
+        .where('ownerUid', isEqualTo: ownerUid)
+        .get();
+
+    const batchLimit = 500;
+    WriteBatch? batch;
+    var count = 0;
+
+    for (final doc in snapshot.docs) {
+      batch ??= firestore.batch();
+      batch.update(doc.reference, {
+        'ownerName': ownerName,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      count++;
+
+      if (count == batchLimit) {
+        await batch.commit();
+        batch = null;
+        count = 0;
+      }
     }
-    return '';
+
+    if (batch != null && count > 0) {
+      await batch.commit();
+    }
   }
 }

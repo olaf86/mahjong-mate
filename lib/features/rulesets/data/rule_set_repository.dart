@@ -17,8 +17,6 @@ class RuleSetRepository {
 
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection('rule_sets');
-  CollectionReference<Map<String, dynamic>> get _usersCollection =>
-      _firestore.collection('users');
   CollectionReference<Map<String, dynamic>> _followsCollection(
     String ownerUid,
   ) => _firestore.collection('users').doc(ownerUid).collection('follows');
@@ -33,7 +31,7 @@ class RuleSetRepository {
         .snapshots()
         .map(_mapQuery);
 
-    return _withOwnerNames(_mergeStreams(publicStream, ownedStream));
+    return _mergeStreams(publicStream, ownedStream);
   }
 
   Stream<List<String>> watchFollowedRuleSetIds({required String ownerUid}) {
@@ -112,7 +110,7 @@ class RuleSetRepository {
       }
     };
 
-    return _withOwnerNames(controller.stream);
+    return controller.stream;
   }
 
   Future<void> followRuleSet({
@@ -162,12 +160,13 @@ class RuleSetRepository {
     if (snapshot.docs.isEmpty) {
       return null;
     }
-    return _resolveOwnerName(_mapDoc(snapshot.docs.first));
+    return _mapDoc(snapshot.docs.first);
   }
 
   Future<RuleSet> createRuleSet({
     required String name,
     required String description,
+    required String ownerName,
     required String ownerUid,
     required RuleSetVisibility visibility,
     required List<RuleItem> items,
@@ -180,6 +179,7 @@ class RuleSetRepository {
     await doc.set({
       'name': name,
       'description': description,
+      'ownerName': ownerName,
       'ownerUid': ownerUid,
       'shareCode': shareCode,
       'visibility': visibility.name,
@@ -192,7 +192,7 @@ class RuleSetRepository {
       id: doc.id,
       name: name,
       description: description,
-      ownerName: '',
+      ownerName: ownerName,
       ownerUid: ownerUid,
       shareCode: shareCode,
       visibility: visibility,
@@ -206,6 +206,7 @@ class RuleSetRepository {
     required String id,
     required String name,
     required String description,
+    required String ownerName,
     required String ownerUid,
     required RuleSetVisibility visibility,
     required List<RuleItem> items,
@@ -220,12 +221,12 @@ class RuleSetRepository {
     final updatePayload = <String, dynamic>{
       'name': name,
       'description': description,
+      'ownerName': ownerName,
       'ownerUid': ownerUid,
       'shareCode': nextShareCode,
       'visibility': visibility.name,
       'updatedAt': FieldValue.serverTimestamp(),
       'items': items.map(_itemToMap).toList(),
-      'ownerName': FieldValue.delete(),
     };
     if (rules != null) {
       updatePayload['rules'] = rules.toMap();
@@ -253,16 +254,12 @@ class RuleSetRepository {
     List<RuleItem>? items,
   }) {
     final resolvedItems = items ?? _parseItems(data['items']);
-    final ownerUid = _stringValueOrNull(data['ownerUid']);
     return RuleSet(
       id: id,
       name: _stringValue(data['name'], fallback: '名称未設定'),
       description: _stringValue(data['description'], fallback: ''),
-      ownerName: _stringValue(
-        data['ownerName'],
-        fallback: ownerUid == null ? 'Mahjong Mate' : '',
-      ),
-      ownerUid: ownerUid,
+      ownerName: _stringValue(data['ownerName'], fallback: 'Mahjong Mate'),
+      ownerUid: _stringValueOrNull(data['ownerUid']),
       shareCode: _stringValueOrNull(data['shareCode']),
       visibility: _parseVisibility(data['visibility']),
       updatedAt: _parseTimestamp(data['updatedAt']),
@@ -334,97 +331,6 @@ class RuleSetRepository {
     };
 
     return controller.stream;
-  }
-
-  Stream<List<RuleSet>> _withOwnerNames(Stream<List<RuleSet>> baseStream) {
-    final controller = StreamController<List<RuleSet>>();
-    final ownerSubs =
-        <String, StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>>{};
-    final ownerNameByUid = <String, String>{};
-    var latestRuleSets = const <RuleSet>[];
-
-    void emit() {
-      final resolved = latestRuleSets.map((ruleSet) {
-        final uid = ruleSet.ownerUid;
-        if (uid == null || uid.isEmpty) return ruleSet;
-        final ownerName = ownerNameByUid[uid];
-        if (ownerName == null || ownerName.isEmpty) return ruleSet;
-        if (ownerName == ruleSet.ownerName) return ruleSet;
-        return ruleSet.copyWith(ownerName: ownerName);
-      }).toList();
-      controller.add(resolved);
-    }
-
-    void updateOwnerSubscriptions(List<RuleSet> items) {
-      final ownerUids = items
-          .map((item) => item.ownerUid)
-          .whereType<String>()
-          .where((uid) => uid.isNotEmpty)
-          .toSet();
-
-      for (final uid in ownerSubs.keys.toList()) {
-        if (!ownerUids.contains(uid)) {
-          ownerSubs[uid]?.cancel();
-          ownerSubs.remove(uid);
-          ownerNameByUid.remove(uid);
-        }
-      }
-
-      for (final uid in ownerUids) {
-        if (ownerSubs.containsKey(uid)) continue;
-        final sub = _usersCollection
-            .doc(uid)
-            .snapshots()
-            .listen(
-              (snapshot) {
-                final data = snapshot.data();
-                final ownerName = _stringValue(
-                  data?['ownerName'],
-                  fallback: '',
-                );
-                if (ownerName.isEmpty) {
-                  ownerNameByUid.remove(uid);
-                } else {
-                  ownerNameByUid[uid] = ownerName;
-                }
-                emit();
-              },
-              onError: (_) {
-                ownerNameByUid.remove(uid);
-                emit();
-              },
-            );
-        ownerSubs[uid] = sub;
-      }
-    }
-
-    final baseSub = baseStream.listen((items) {
-      latestRuleSets = items;
-      updateOwnerSubscriptions(items);
-      emit();
-    }, onError: controller.addError);
-
-    controller.onCancel = () {
-      baseSub.cancel();
-      for (final sub in ownerSubs.values) {
-        sub.cancel();
-      }
-    };
-
-    return controller.stream;
-  }
-
-  Future<RuleSet> _resolveOwnerName(RuleSet ruleSet) async {
-    final uid = ruleSet.ownerUid;
-    if (uid == null || uid.isEmpty) {
-      return ruleSet;
-    }
-    final snapshot = await _usersCollection.doc(uid).get();
-    final ownerName = _stringValue(snapshot.data()?['ownerName'], fallback: '');
-    if (ownerName.isEmpty || ownerName == ruleSet.ownerName) {
-      return ruleSet;
-    }
-    return ruleSet.copyWith(ownerName: ownerName);
   }
 
   int _sortRuleSets(RuleSet a, RuleSet b) {

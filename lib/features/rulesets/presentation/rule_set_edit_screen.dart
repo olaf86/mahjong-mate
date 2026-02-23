@@ -596,6 +596,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
 
     try {
       final description = _descriptionController.text.trim();
+      final ownerName = await ref.read(ownerNameProvider.future);
       final ownerUid = await ref.read(ownerUidProvider.future);
       final repository = ref.read(ruleSetRepositoryProvider);
       final startingPoints =
@@ -653,6 +654,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
         final created = await repository.createRuleSet(
           name: name,
           description: description,
+          ownerName: ownerName,
           ownerUid: ownerUid,
           visibility: _visibility,
           items: const [],
@@ -669,6 +671,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           id: ruleSet.id,
           name: name,
           description: description,
+          ownerName: ownerName,
           ownerUid: ruleSet.ownerUid ?? ownerUid,
           visibility: _visibility,
           items: ruleSet.items,
