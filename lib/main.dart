@@ -8,22 +8,17 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 
 import 'app.dart';
 
-const bool kForceDebugAppCheckProvider = bool.fromEnvironment(
-  "APP_CHECK_DEBUG",
-);
-
 Future<void> main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: binding);
   Object? initError;
   try {
     await Firebase.initializeApp();
-    final useDebugAppCheckProvider = kDebugMode || kForceDebugAppCheckProvider;
     await FirebaseAppCheck.instance.activate(
-      providerAndroid: useDebugAppCheckProvider
+      providerAndroid: kDebugMode
           ? const AndroidDebugProvider()
           : const AndroidPlayIntegrityProvider(),
-      providerApple: useDebugAppCheckProvider
+      providerApple: kDebugMode
           ? const AppleDebugProvider()
           : const AppleAppAttestWithDeviceCheckFallbackProvider(),
     );

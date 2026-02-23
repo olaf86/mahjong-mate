@@ -62,3 +62,15 @@ await FirebaseAppCheck.instance.activate(
 
 - 上記が満たせたら段階的に enforcement を検討
 - 例: まず Callable Function の一部のみ `enforceAppCheck: true`
+
+## 6. ローカルデバッグ（iOS Simulator）
+
+Firebase 公式の iOS Debug Provider 手順に合わせて、`ios/Runner/AppDelegate.swift` で
+`DEBUG + Simulator` のときだけ `AppCheckDebugProvider` を使う設定を入れています。
+
+ローカル確認手順:
+
+1. iOS Simulator で Debug 実行
+2. Xcode ログに出る App Check debug token を確認
+3. Firebase Console の App Check で debug token を登録
+4. 再実行して App Check エラーが解消されることを確認
