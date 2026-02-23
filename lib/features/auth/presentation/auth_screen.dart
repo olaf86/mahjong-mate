@@ -71,6 +71,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     _authStatusLabel(user),
                     style: theme.textTheme.bodyMedium,
                   ),
+                  if (isAnonymousSession) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      '匿名ログイン中でもルールセットの作成・フォローは可能です。'
+                      'ただし、アプリのアンインストールや端末変更時にはデータが消える可能性があります。',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -137,32 +145,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
           if (user != null && !isAnonymousSession) ...[
             const SizedBox(height: 16),
             Text('ログイン中の操作', style: theme.textTheme.titleLarge),
-            const SizedBox(height: 12),
-            if (!user.emailVerified) ...[
-              Row(
-                children: [
-                  const Icon(
-                    Icons.error_outline,
-                    size: 18,
-                    color: Colors.deepOrange,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'メールアドレスが未認証です。',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton(
-                onPressed: _authBusy
-                    ? null
-                    : () => _sendVerification(context, auth),
-                child: const Text('認証メールを再送'),
-              ),
-            ],
+            const SizedBox(height: 8),
             TextButton(
               onPressed: _authBusy ? null : () => _signOut(context, auth),
               child: const Text('ログアウト'),
@@ -467,7 +450,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       return 'ログイン状態を確認中です。';
     }
     if (user.isAnonymous) {
-      return '匿名ログイン中（ローカル作業モード）';
+      return '匿名ログイン中';
     }
     if (user.emailVerified) {
       return 'メールアカウントでログイン中: ${user.email ?? 'メール未設定'}';
