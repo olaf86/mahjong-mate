@@ -1,76 +1,39 @@
-enum PlayerCount {
-  four,
-  three,
-}
+enum PlayerCount { four, three }
 
-enum MatchType {
-  tonpuu,
-  tonnan,
-  isshou,
-}
+enum MatchType { tonpuu, tonnan, isshou }
 
-enum BoxTenThreshold {
-  zero,
-  minus,
-}
+enum BoxTenThreshold { zero, minus }
 
-enum BoxTenBehavior {
-  end,
-  continuePlay,
-}
+enum BoxTenBehavior { end, continuePlay }
 
-enum KuitanRule {
-  on,
-  off,
-}
+enum KuitanRule { on, off }
 
-enum SakizukeRule {
-  complete,
-  ato,
-  naka,
-}
+enum SakizukeRule { complete, ato, naka }
 
-enum HeadBumpRule {
-  atama,
-  daburon,
-}
+enum HeadBumpRule { atama, daburon }
 
-enum RenchanRule {
-  oyaTenpai,
-  oyaRyuukyoku,
-}
+enum RenchanRule { oyaTenpai, oyaRyuukyoku }
 
-enum OorasuStopRule {
-  on,
-  off,
-}
+enum OorasuStopRule { on, off }
 
-enum GoRenchanTwoHanRule {
-  on,
-  off,
-}
+enum GoRenchanTwoHanRule { on, off }
 
-enum DoraRule {
-  on,
-  off,
-}
+enum NagashiManganRule { on, off }
 
-enum SpecialDora {
-  gold,
-  hana,
-  nuki,
-}
+enum ChiitoitsuFourTilesRule { on, off }
 
-enum RiichiStickRule {
-  topTake,
-  split,
-}
+enum NishiIriRule { on, off }
+
+enum NishiIriOption { suddenDeath, untilWestRoundEnd }
+
+enum DoraRule { on, off }
+
+enum SpecialDora { gold, hana, nuki }
+
+enum RiichiStickRule { topTake, split }
 
 class RedDoraRule {
-  const RedDoraRule({
-    required this.enabled,
-    required this.count,
-  });
+  const RedDoraRule({required this.enabled, required this.count});
 
   final bool enabled;
   final int count;
@@ -91,19 +54,14 @@ class ScoreRules {
 }
 
 class YakumanRules {
-  const YakumanRules({
-    required this.allowMultiple,
-    required this.allowDouble,
-  });
+  const YakumanRules({required this.allowMultiple, required this.allowDouble});
 
   final bool allowMultiple;
   final bool allowDouble;
 }
 
 class ThreePlayerRules {
-  const ThreePlayerRules({
-    required this.northNuki,
-  });
+  const ThreePlayerRules({required this.northNuki});
 
   final bool northNuki;
 }
@@ -121,6 +79,10 @@ class RuleSetRules {
     required this.renchan,
     required this.oorasuStop,
     required this.goRenchanTwoHan,
+    required this.nagashiMangan,
+    required this.chiitoitsuFourTiles,
+    required this.nishiIri,
+    required this.nishiIriOption,
     required this.kandora,
     required this.uradora,
     required this.redDora,
@@ -128,6 +90,7 @@ class RuleSetRules {
     required this.score,
     required this.yakuman,
     required this.threePlayer,
+    required this.freeText,
   });
 
   final PlayerCount players;
@@ -141,6 +104,10 @@ class RuleSetRules {
   final RenchanRule renchan;
   final OorasuStopRule oorasuStop;
   final GoRenchanTwoHanRule goRenchanTwoHan;
+  final NagashiManganRule nagashiMangan;
+  final ChiitoitsuFourTilesRule chiitoitsuFourTiles;
+  final NishiIriRule nishiIri;
+  final NishiIriOption nishiIriOption;
   final DoraRule kandora;
   final DoraRule uradora;
   final RedDoraRule redDora;
@@ -148,6 +115,7 @@ class RuleSetRules {
   final ScoreRules score;
   final YakumanRules yakuman;
   final ThreePlayerRules? threePlayer;
+  final String freeText;
 
   Map<String, dynamic> toMap() {
     return {
@@ -162,12 +130,13 @@ class RuleSetRules {
       'renchan': renchan.name,
       'oorasuStop': oorasuStop.name,
       'goRenchanTwoHan': goRenchanTwoHan.name,
+      'nagashiMangan': nagashiMangan.name,
+      'chiitoitsuFourTiles': chiitoitsuFourTiles.name,
+      'nishiIri': nishiIri.name,
+      'nishiIriOption': nishiIriOption.name,
       'kandora': kandora.name,
       'uradora': uradora.name,
-      'redDora': {
-        'enabled': redDora.enabled,
-        'count': redDora.count,
-      },
+      'redDora': {'enabled': redDora.enabled, 'count': redDora.count},
       'specialDora': specialDora.map((item) => item.name).toList(),
       'score': {
         'oka': score.oka,
@@ -180,9 +149,8 @@ class RuleSetRules {
         'allowDouble': yakuman.allowDouble,
       },
       if (threePlayer != null)
-        'threePlayer': {
-          'northNuki': threePlayer!.northNuki,
-        },
+        'threePlayer': {'northNuki': threePlayer!.northNuki},
+      'freeText': freeText,
     };
   }
 
@@ -190,8 +158,16 @@ class RuleSetRules {
     if (value is! Map<String, dynamic>) return null;
 
     return RuleSetRules(
-      players: _enumByName(PlayerCount.values, value['players'], PlayerCount.four),
-      matchType: _enumByName(MatchType.values, value['matchType'], MatchType.tonpuu),
+      players: _enumByName(
+        PlayerCount.values,
+        value['players'],
+        PlayerCount.four,
+      ),
+      matchType: _enumByName(
+        MatchType.values,
+        value['matchType'],
+        MatchType.tonpuu,
+      ),
       startingPoints: _intValue(value['startingPoints'], fallback: 25000),
       boxTenThreshold: _enumByName(
         BoxTenThreshold.values,
@@ -204,12 +180,51 @@ class RuleSetRules {
         BoxTenBehavior.end,
       ),
       kuitan: _enumByName(KuitanRule.values, value['kuitan'], KuitanRule.on),
-      sakizuke: _enumByName(SakizukeRule.values, value['sakizuke'], SakizukeRule.complete),
-      headBump: _enumByName(HeadBumpRule.values, value['headBump'], HeadBumpRule.atama),
-      renchan: _enumByName(RenchanRule.values, value['renchan'], RenchanRule.oyaTenpai),
-      oorasuStop: _enumByName(OorasuStopRule.values, value['oorasuStop'], OorasuStopRule.on),
-      goRenchanTwoHan:
-          _enumByName(GoRenchanTwoHanRule.values, value['goRenchanTwoHan'], GoRenchanTwoHanRule.off),
+      sakizuke: _enumByName(
+        SakizukeRule.values,
+        value['sakizuke'],
+        SakizukeRule.complete,
+      ),
+      headBump: _enumByName(
+        HeadBumpRule.values,
+        value['headBump'],
+        HeadBumpRule.atama,
+      ),
+      renchan: _enumByName(
+        RenchanRule.values,
+        value['renchan'],
+        RenchanRule.oyaTenpai,
+      ),
+      oorasuStop: _enumByName(
+        OorasuStopRule.values,
+        value['oorasuStop'],
+        OorasuStopRule.on,
+      ),
+      goRenchanTwoHan: _enumByName(
+        GoRenchanTwoHanRule.values,
+        value['goRenchanTwoHan'],
+        GoRenchanTwoHanRule.off,
+      ),
+      nagashiMangan: _enumByName(
+        NagashiManganRule.values,
+        value['nagashiMangan'],
+        NagashiManganRule.on,
+      ),
+      chiitoitsuFourTiles: _enumByName(
+        ChiitoitsuFourTilesRule.values,
+        value['chiitoitsuFourTiles'],
+        ChiitoitsuFourTilesRule.off,
+      ),
+      nishiIri: _enumByName(
+        NishiIriRule.values,
+        value['nishiIri'],
+        NishiIriRule.on,
+      ),
+      nishiIriOption: _enumByName(
+        NishiIriOption.values,
+        value['nishiIriOption'],
+        NishiIriOption.suddenDeath,
+      ),
       kandora: _enumByName(DoraRule.values, value['kandora'], DoraRule.on),
       uradora: _enumByName(DoraRule.values, value['uradora'], DoraRule.on),
       redDora: _parseRedDora(value['redDora']),
@@ -217,6 +232,7 @@ class RuleSetRules {
       score: _parseScore(value['score']),
       yakuman: _parseYakuman(value['yakuman']),
       threePlayer: _parseThreePlayer(value['threePlayer']),
+      freeText: _stringValue(value['freeText']),
     );
   }
 
@@ -233,7 +249,9 @@ class RuleSetRules {
     if (value is List) {
       return value
           .whereType<String>()
-          .map((name) => _enumByName(SpecialDora.values, name, SpecialDora.gold))
+          .map(
+            (name) => _enumByName(SpecialDora.values, name, SpecialDora.gold),
+          )
           .toSet()
           .toList();
     }
@@ -275,14 +293,16 @@ class RuleSetRules {
 
   static ThreePlayerRules? _parseThreePlayer(Object? value) {
     if (value is Map<String, dynamic>) {
-      return ThreePlayerRules(
-        northNuki: value['northNuki'] == true,
-      );
+      return ThreePlayerRules(northNuki: value['northNuki'] == true);
     }
     return null;
   }
 
-  static T _enumByName<T extends Enum>(List<T> values, Object? raw, T fallback) {
+  static T _enumByName<T extends Enum>(
+    List<T> values,
+    Object? raw,
+    T fallback,
+  ) {
     if (raw is String) {
       for (final value in values) {
         if (value.name == raw) {
@@ -297,5 +317,10 @@ class RuleSetRules {
     if (raw is int) return raw;
     if (raw is num) return raw.toInt();
     return fallback;
+  }
+
+  static String _stringValue(Object? raw) {
+    if (raw is String) return raw;
+    return '';
   }
 }
