@@ -22,9 +22,9 @@ enum NagashiManganRule { on, off }
 
 enum ChiitoitsuFourTilesRule { on, off }
 
-enum NishiIriRule { on, off }
+enum ShaNyuRule { on, off }
 
-enum NishiIriOption { suddenDeath, untilWestRoundEnd }
+enum ShaNyuOption { suddenDeath, untilWestRoundEnd }
 
 enum DoraRule { on, off }
 
@@ -81,8 +81,8 @@ class RuleSetRules {
     required this.goRenchanTwoHan,
     required this.nagashiMangan,
     required this.chiitoitsuFourTiles,
-    required this.nishiIri,
-    required this.nishiIriOption,
+    required this.shaNyu,
+    required this.shaNyuOption,
     required this.kandora,
     required this.uradora,
     required this.redDora,
@@ -106,8 +106,8 @@ class RuleSetRules {
   final GoRenchanTwoHanRule goRenchanTwoHan;
   final NagashiManganRule nagashiMangan;
   final ChiitoitsuFourTilesRule chiitoitsuFourTiles;
-  final NishiIriRule nishiIri;
-  final NishiIriOption nishiIriOption;
+  final ShaNyuRule shaNyu;
+  final ShaNyuOption shaNyuOption;
   final DoraRule kandora;
   final DoraRule uradora;
   final RedDoraRule redDora;
@@ -132,8 +132,8 @@ class RuleSetRules {
       'goRenchanTwoHan': goRenchanTwoHan.name,
       'nagashiMangan': nagashiMangan.name,
       'chiitoitsuFourTiles': chiitoitsuFourTiles.name,
-      'nishiIri': nishiIri.name,
-      'nishiIriOption': nishiIriOption.name,
+      'shaNyu': shaNyu.name,
+      'shaNyuOption': shaNyuOption.name,
       'kandora': kandora.name,
       'uradora': uradora.name,
       'redDora': {'enabled': redDora.enabled, 'count': redDora.count},
@@ -215,15 +215,11 @@ class RuleSetRules {
         value['chiitoitsuFourTiles'],
         ChiitoitsuFourTilesRule.off,
       ),
-      nishiIri: _enumByName(
-        NishiIriRule.values,
-        value['nishiIri'],
-        NishiIriRule.on,
-      ),
-      nishiIriOption: _enumByName(
-        NishiIriOption.values,
-        value['nishiIriOption'],
-        NishiIriOption.suddenDeath,
+      shaNyu: _enumByName(ShaNyuRule.values, value['shaNyu'], ShaNyuRule.on),
+      shaNyuOption: _enumByName(
+        ShaNyuOption.values,
+        value['shaNyuOption'],
+        ShaNyuOption.suddenDeath,
       ),
       kandora: _enumByName(DoraRule.values, value['kandora'], DoraRule.on),
       uradora: _enumByName(DoraRule.values, value['uradora'], DoraRule.on),

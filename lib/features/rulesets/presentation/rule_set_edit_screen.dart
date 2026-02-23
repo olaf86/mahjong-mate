@@ -43,8 +43,8 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   GoRenchanTwoHanRule _goRenchanTwoHan = GoRenchanTwoHanRule.off;
   NagashiManganRule _nagashiMangan = NagashiManganRule.on;
   ChiitoitsuFourTilesRule _chiitoitsuFourTiles = ChiitoitsuFourTilesRule.off;
-  NishiIriRule _nishiIri = NishiIriRule.on;
-  NishiIriOption _nishiIriOption = NishiIriOption.suddenDeath;
+  ShaNyuRule _shaNyu = ShaNyuRule.on;
+  ShaNyuOption _shaNyuOption = ShaNyuOption.suddenDeath;
   DoraRule _kandora = DoraRule.on;
   DoraRule _uradora = DoraRule.on;
   bool _redDoraEnabled = true;
@@ -108,8 +108,8 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
         _goRenchanTwoHan = rules.goRenchanTwoHan;
         _nagashiMangan = rules.nagashiMangan;
         _chiitoitsuFourTiles = rules.chiitoitsuFourTiles;
-        _nishiIri = rules.nishiIri;
-        _nishiIriOption = rules.nishiIriOption;
+        _shaNyu = rules.shaNyu;
+        _shaNyuOption = rules.shaNyuOption;
         _kandora = rules.kandora;
         _uradora = rules.uradora;
         _redDoraEnabled = rules.redDora.enabled;
@@ -394,23 +394,23 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             ),
           ),
           _RuleCard(
-            title: '西入',
-            child: _SegmentedPicker<NishiIriRule>(
-              value: _nishiIri,
-              options: const {NishiIriRule.on: 'あり', NishiIriRule.off: 'なし'},
-              onChanged: (value) => setState(() => _nishiIri = value),
+            title: 'ShaNyu（シャーニュウ）',
+            child: _SegmentedPicker<ShaNyuRule>(
+              value: _shaNyu,
+              options: const {ShaNyuRule.on: 'あり', ShaNyuRule.off: 'なし'},
+              onChanged: (value) => setState(() => _shaNyu = value),
             ),
           ),
-          if (_nishiIri == NishiIriRule.on)
+          if (_shaNyu == ShaNyuRule.on)
             _RuleCard(
-              title: '西入時の進行',
-              child: _SegmentedPicker<NishiIriOption>(
-                value: _nishiIriOption,
+              title: 'ShaNyu時の進行',
+              child: _SegmentedPicker<ShaNyuOption>(
+                value: _shaNyuOption,
                 options: const {
-                  NishiIriOption.suddenDeath: 'サドンデス',
-                  NishiIriOption.untilWestRoundEnd: '西場終了まで続行',
+                  ShaNyuOption.suddenDeath: 'サドンデス',
+                  ShaNyuOption.untilWestRoundEnd: '西場終了まで続行',
                 },
-                onChanged: (value) => setState(() => _nishiIriOption = value),
+                onChanged: (value) => setState(() => _shaNyuOption = value),
               ),
             ),
           const SizedBox(height: 20),
@@ -638,8 +638,8 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
         goRenchanTwoHan: _goRenchanTwoHan,
         nagashiMangan: _nagashiMangan,
         chiitoitsuFourTiles: _chiitoitsuFourTiles,
-        nishiIri: _nishiIri,
-        nishiIriOption: _nishiIriOption,
+        shaNyu: _shaNyu,
+        shaNyuOption: _shaNyuOption,
         kandora: _kandora,
         uradora: _uradora,
         redDora: RedDoraRule(

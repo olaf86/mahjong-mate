@@ -415,11 +415,11 @@ class _RuleSetCard extends StatelessWidget {
         isStandard: rules.chiitoitsuFourTiles == ChiitoitsuFourTilesRule.off,
       ),
       _RuleTileData(
-        label: '西入',
-        value: _nishiIriLabel(rules),
+        label: 'ShaNyu',
+        value: _shaNyuLabel(rules),
         isStandard:
-            rules.nishiIri == NishiIriRule.on &&
-            rules.nishiIriOption == NishiIriOption.suddenDeath,
+            rules.shaNyu == ShaNyuRule.on &&
+            rules.shaNyuOption == ShaNyuOption.suddenDeath,
       ),
     ]);
 
@@ -470,9 +470,9 @@ class _RuleSetCard extends StatelessWidget {
     return labels.join('・');
   }
 
-  String _nishiIriLabel(RuleSetRules rules) {
-    if (rules.nishiIri == NishiIriRule.off) return 'なし';
-    if (rules.nishiIriOption == NishiIriOption.suddenDeath) return 'ｻﾄﾞﾝ';
+  String _shaNyuLabel(RuleSetRules rules) {
+    if (rules.shaNyu == ShaNyuRule.off) return 'なし';
+    if (rules.shaNyuOption == ShaNyuOption.suddenDeath) return 'ｻﾄﾞﾝ';
     return '西場まで';
   }
 
