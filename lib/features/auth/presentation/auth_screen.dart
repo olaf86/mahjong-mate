@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 import '../../../shared/auth/auth_user_provider.dart';
-import '../../rulesets/application/rule_sets_provider.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -321,25 +321,23 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     );
 
     if (confirmed != true) return;
-    await _deleteAccount(context, auth, user);
+    await _deleteAccount(context, auth);
   }
 
-  Future<void> _deleteAccount(
-    BuildContext context,
-    FirebaseAuth auth,
-    User user,
-  ) async {
+  Future<void> _deleteAccount(BuildContext context, FirebaseAuth auth) async {
     setState(() => _authBusy = true);
     try {
-      final ownerUid = await ref.read(ownerUidProvider.future);
-      final repository = ref.read(ruleSetRepositoryProvider);
-      await repository.deleteAllByOwnerUid(ownerUid);
-      await user.delete();
+      final callable = FirebaseFunctions.instance.httpsCallable(
+        'deleteAccountData',
+      );
+      await callable.call();
       await auth.signInAnonymously();
       _showSnack(context, 'アカウントを削除しました。');
       if (mounted) {
         setState(() {});
       }
+    } on FirebaseFunctionsException catch (error) {
+      _showSnack(context, _accountDeleteFunctionErrorMessage(error));
     } on FirebaseAuthException catch (error) {
       _showSnack(context, _accountDeleteErrorMessage(error));
     } catch (error) {
@@ -447,6 +445,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       default:
         return 'アカウント削除に失敗しました: ${error.message ?? error.code}';
     }
+  }
+
+  String _accountDeleteFunctionErrorMessage(FirebaseFunctionsException error) {
+    final code = error.code.toLowerCase();
+    if (code.contains('unauthenticated')) {
+      return '認証状態を確認できません。再ログイン後にお試しください。';
+    }
+    if (code.contains('permission-denied')) {
+      return '削除権限がありません。';
+    }
+    return 'アカウント削除に失敗しました: ${error.message ?? error.code}';
   }
 
   String? _validateRegistrationPassword(String password) {

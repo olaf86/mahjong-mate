@@ -238,45 +238,6 @@ class RuleSetRepository {
     await _collection.doc(id).delete();
   }
 
-  Future<void> deleteAllByOwnerUid(String ownerUid) async {
-    final firestore = _firestore;
-    const batchLimit = 500;
-    WriteBatch? batch;
-    var operationCount = 0;
-
-    Future<void> commitIfNeeded() async {
-      if (batch != null && operationCount > 0) {
-        await batch!.commit();
-        batch = null;
-        operationCount = 0;
-      }
-    }
-
-    final ownedSnapshot = await _collection
-        .where('ownerUid', isEqualTo: ownerUid)
-        .get();
-    for (final doc in ownedSnapshot.docs) {
-      batch ??= firestore.batch();
-      batch!.delete(doc.reference);
-      operationCount++;
-      if (operationCount >= batchLimit) {
-        await commitIfNeeded();
-      }
-    }
-
-    final followsSnapshot = await _followsCollection(ownerUid).get();
-    for (final doc in followsSnapshot.docs) {
-      batch ??= firestore.batch();
-      batch!.delete(doc.reference);
-      operationCount++;
-      if (operationCount >= batchLimit) {
-        await commitIfNeeded();
-      }
-    }
-
-    await commitIfNeeded();
-  }
-
   List<RuleSet> _mapQuery(QuerySnapshot<Map<String, dynamic>> snapshot) {
     return snapshot.docs.map(_mapDoc).toList();
   }
