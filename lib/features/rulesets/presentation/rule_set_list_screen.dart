@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../shared/branding/app_logo.dart';
+import '../../../shared/auth/auth_user_provider.dart';
+import '../../../shared/profile/owner_name_provider.dart';
 import '../application/rule_sets_provider.dart';
 import '../domain/rule_category.dart';
 import '../domain/rule_set.dart';
@@ -22,6 +24,10 @@ class RuleSetListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ruleSets = ref.watch(followedRuleSetsProvider);
+    final ownerUidAsync = ref.watch(ownerUidProvider);
+    final ownerNameAsync = ref.watch(ownerNameProvider);
+    final ownerUid = ownerUidAsync.asData?.value;
+    final ownerName = ownerNameAsync.asData?.value ?? ownerNameDefaultValue;
     final iconColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.8);
 
     return Scaffold(
@@ -120,7 +126,13 @@ class RuleSetListScreen extends ConsumerWidget {
                       sliver: SliverList(
                         delegate: SliverChildListDelegate(
                           items
-                              .map((ruleSet) => _RuleSetCard(ruleSet: ruleSet))
+                              .map(
+                                (ruleSet) => _RuleSetCard(
+                                  ruleSet: ruleSet,
+                                  currentOwnerUid: ownerUid,
+                                  currentOwnerName: ownerName,
+                                ),
+                              )
                               .toList(),
                         ),
                       ),
@@ -192,9 +204,15 @@ class RuleSetListScreen extends ConsumerWidget {
 }
 
 class _RuleSetCard extends StatelessWidget {
-  const _RuleSetCard({required this.ruleSet});
+  const _RuleSetCard({
+    required this.ruleSet,
+    required this.currentOwnerUid,
+    required this.currentOwnerName,
+  });
 
   final RuleSet ruleSet;
+  final String? currentOwnerUid;
+  final String currentOwnerName;
 
   @override
   Widget build(BuildContext context) {
@@ -204,6 +222,10 @@ class _RuleSetCard extends StatelessWidget {
     }
     final rules = ruleSet.rules;
     final tiles = rules == null ? null : _buildRuleTiles(rules);
+    final displayOwnerName =
+        currentOwnerUid != null && ruleSet.ownerUid == currentOwnerUid
+        ? currentOwnerName
+        : ruleSet.ownerName;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -273,7 +295,7 @@ class _RuleSetCard extends StatelessWidget {
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            'オーナー: ${ruleSet.ownerName}',
+                            'オーナー: $displayOwnerName',
                             softWrap: true,
                           ),
                         ),

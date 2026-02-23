@@ -20,7 +20,6 @@ class RuleSetEditScreen extends ConsumerStatefulWidget {
 
 class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   late final TextEditingController _nameController;
-  late final TextEditingController _ownerNameController;
   late final TextEditingController _descriptionController;
   late final TextEditingController _startingPointsController;
   late final TextEditingController _returnPointsController;
@@ -29,7 +28,6 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   late final TextEditingController _freeTextController;
   bool _initialized = false;
   bool _saving = false;
-  bool _ownerNameInitialized = false;
   RuleSetVisibility _visibility = RuleSetVisibility.private;
   PlayerCount _players = PlayerCount.four;
   MatchType _matchType = MatchType.tonnan;
@@ -58,7 +56,6 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    _ownerNameController = TextEditingController();
     _descriptionController = TextEditingController();
     _startingPointsController = TextEditingController(text: '25000');
     _returnPointsController = TextEditingController(text: '30000');
@@ -70,7 +67,6 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _ownerNameController.dispose();
     _descriptionController.dispose();
     _startingPointsController.dispose();
     _returnPointsController.dispose();
@@ -89,7 +85,6 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
     ruleSetAsync.whenData((ruleSet) {
       if (ruleSet == null) return;
       _nameController.text = ruleSet.name;
-      _ownerNameController.text = ruleSet.ownerName;
       _descriptionController.text = ruleSet.description;
       _visibility = ruleSet.visibility;
       final rules = ruleSet.rules;
@@ -183,14 +178,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
 
   Widget _buildForm(BuildContext context, String title, RuleSet? ruleSet) {
     final ownerNameAsync = ref.watch(ownerNameProvider);
-    if (!_ownerNameInitialized && ruleSet == null) {
-      ownerNameAsync.whenData((value) {
-        if (_ownerNameController.text.trim().isEmpty) {
-          _ownerNameController.text = value;
-        }
-        _ownerNameInitialized = true;
-      });
-    }
+    final ownerName = ownerNameAsync.asData?.value ?? ownerNameDefaultValue;
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -209,12 +197,12 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             decoration: const InputDecoration(labelText: 'ルールセット名'),
           ),
           const SizedBox(height: 16),
-          TextField(
-            controller: _ownerNameController,
+          InputDecorator(
             decoration: const InputDecoration(
               labelText: 'オーナー名',
-              helperText: '未入力の場合は「あなた」または設定済みの名前が使われます。',
+              helperText: '設定画面のオーナー名と同期されます。',
             ),
+            child: Text(ownerName),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -608,11 +596,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
 
     try {
       final description = _descriptionController.text.trim();
-      final fallbackOwnerName =
-          ref.read(ownerNameProvider).value ?? ownerNameDefaultValue;
-      final ownerName = _ownerNameController.text.trim().isEmpty
-          ? fallbackOwnerName
-          : _ownerNameController.text.trim();
+      final ownerName = await ref.read(ownerNameProvider.future);
       final ownerUid = await ref.read(ownerUidProvider.future);
       final repository = ref.read(ruleSetRepositoryProvider);
       final startingPoints =
