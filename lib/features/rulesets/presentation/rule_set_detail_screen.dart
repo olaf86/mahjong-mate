@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 
 import '../application/rule_sets_provider.dart';
 import '../../../shared/auth/auth_user_provider.dart';
+import '../../../shared/profile/owner_name_provider.dart';
 import '../domain/rule_set_rules.dart';
 import '../domain/share_code.dart';
 
@@ -39,7 +40,11 @@ class RuleSetDetailScreen extends ConsumerWidget {
             followedIdsAsync.value?.contains(ruleSet.id) ?? false;
         final ownerUidAsync = ref.watch(ownerUidProvider);
         final ownerUid = ownerUidAsync.value;
+        final ownerNameAsync = ref.watch(ownerNameProvider);
+        final currentOwnerName =
+            ownerNameAsync.asData?.value ?? ownerNameDefaultValue;
         final isOwner = ownerUid != null && ruleSet.ownerUid == ownerUid;
+        final displayOwnerName = isOwner ? currentOwnerName : ruleSet.ownerName;
 
         return Scaffold(
           appBar: AppBar(
@@ -80,7 +85,7 @@ class RuleSetDetailScreen extends ConsumerWidget {
               _HeaderCard(
                 name: ruleSet.name,
                 description: ruleSet.description,
-                ownerName: ruleSet.ownerName,
+                ownerName: displayOwnerName,
                 shareCode: ruleSet.shareCode,
                 isPublic: ruleSet.isPublic,
                 updatedAtLabel: ruleSet.updatedAtLabel,
