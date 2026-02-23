@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../shared/auth/auth_user_provider.dart';
+import '../../rulesets/application/rule_sets_provider.dart';
 
 class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
@@ -11,7 +12,8 @@ class AuthScreen extends ConsumerStatefulWidget {
   ConsumerState<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObserver {
+class _AuthScreenState extends ConsumerState<AuthScreen>
+    with WidgetsBindingObserver {
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   bool _authBusy = false;
@@ -48,9 +50,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
     final user = auth.currentUser;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('認証'),
-      ),
+      appBar: AppBar(title: const Text('認証')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         children: [
@@ -58,10 +58,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
             user == null
                 ? 'ログイン状態を確認中です。'
                 : user.isAnonymous
-                    ? '未登録'
-                    : user.emailVerified
-                        ? 'ログイン中: ${user.email ?? 'メール未設定'}'
-                        : '未認証: ${user.email ?? 'メール未設定'}',
+                ? '未登録'
+                : user.emailVerified
+                ? 'ログイン中: ${user.email ?? 'メール未設定'}'
+                : '未認証: ${user.email ?? 'メール未設定'}',
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 12),
@@ -73,9 +73,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   autofillHints: const [AutofillHints.email],
-                  decoration: const InputDecoration(
-                    labelText: 'メールアドレス',
-                  ),
+                  decoration: const InputDecoration(labelText: 'メールアドレス'),
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -98,14 +96,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: _authBusy ? null : () => _registerAccount(context, auth, user),
+                  onPressed: _authBusy
+                      ? null
+                      : () => _registerAccount(context, auth, user),
                   child: const Text('登録する'),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  onPressed: _authBusy ? null : () => _signIn(context, auth, user),
+                  onPressed: _authBusy
+                      ? null
+                      : () => _signIn(context, auth, user),
                   child: const Text('ログイン'),
                 ),
               ),
@@ -122,7 +124,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
             if (!user.emailVerified) ...[
               Row(
                 children: [
-                  const Icon(Icons.error_outline, size: 18, color: Colors.deepOrange),
+                  const Icon(
+                    Icons.error_outline,
+                    size: 18,
+                    color: Colors.deepOrange,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -134,7 +140,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
               ),
               const SizedBox(height: 8),
               OutlinedButton(
-                onPressed: _authBusy ? null : () => _sendVerification(context, auth),
+                onPressed: _authBusy
+                    ? null
+                    : () => _sendVerification(context, auth),
                 child: const Text('認証メールを再送'),
               ),
             ],
@@ -143,6 +151,34 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
               child: const Text('ログアウト'),
             ),
           ],
+          const SizedBox(height: 24),
+          Text('アカウント削除', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user != null && !user.isAnonymous
+                        ? '登録済みアカウントを削除します。'
+                        : '未登録（匿名）状態では削除操作は不要です。',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: _authBusy || user == null || user.isAnonymous
+                        ? null
+                        : () => _confirmAndDeleteAccount(context, auth, user),
+                    icon: const Icon(Icons.delete_outline),
+                    label: const Text('アカウントを削除'),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -225,10 +261,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
     }
     setState(() => _authBusy = true);
     try {
-      await auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      await auth.signInWithEmailAndPassword(email: email, password: password);
       final current = auth.currentUser;
       if (current != null && !current.emailVerified) {
         await _promptUnverified(context, auth);
@@ -260,6 +293,64 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
     }
   }
 
+  Future<void> _confirmAndDeleteAccount(
+    BuildContext context,
+    FirebaseAuth auth,
+    User user,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('アカウント削除の確認'),
+          content: const Text(
+            'アカウントを削除します。作成したルールセットやフォロー中のルールセットなどが全てクリアされますが、本当によろしいでしょうか？',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('削除する'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) return;
+    await _deleteAccount(context, auth, user);
+  }
+
+  Future<void> _deleteAccount(
+    BuildContext context,
+    FirebaseAuth auth,
+    User user,
+  ) async {
+    setState(() => _authBusy = true);
+    try {
+      final ownerUid = await ref.read(ownerUidProvider.future);
+      final repository = ref.read(ruleSetRepositoryProvider);
+      await repository.deleteAllByOwnerUid(ownerUid);
+      await user.delete();
+      await auth.signInAnonymously();
+      _showSnack(context, 'アカウントを削除しました。');
+      if (mounted) {
+        setState(() {});
+      }
+    } on FirebaseAuthException catch (error) {
+      _showSnack(context, _accountDeleteErrorMessage(error));
+    } catch (error) {
+      _showSnack(context, 'アカウント削除に失敗しました: $error');
+    } finally {
+      if (mounted) {
+        setState(() => _authBusy = false);
+      }
+    }
+  }
+
   Future<void> _refreshAuthState({bool silent = false}) async {
     setState(() => _authBusy = true);
     try {
@@ -278,7 +369,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
     }
   }
 
-  Future<void> _sendVerification(BuildContext context, FirebaseAuth auth) async {
+  Future<void> _sendVerification(
+    BuildContext context,
+    FirebaseAuth auth,
+  ) async {
     final user = auth.currentUser;
     if (user == null || user.emailVerified) return;
     try {
@@ -289,7 +383,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
     }
   }
 
-  Future<void> _promptUnverified(BuildContext context, FirebaseAuth auth) async {
+  Future<void> _promptUnverified(
+    BuildContext context,
+    FirebaseAuth auth,
+  ) async {
     await showDialog<void>(
       context: context,
       builder: (context) {
@@ -315,7 +412,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
   }
 
   void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _authErrorMessage(FirebaseAuthException error) {
@@ -336,6 +435,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with WidgetsBindingObse
         return 'アカウントが見つかりません。';
       default:
         return '認証に失敗しました: ${error.message ?? error.code}';
+    }
+  }
+
+  String _accountDeleteErrorMessage(FirebaseAuthException error) {
+    switch (error.code) {
+      case 'requires-recent-login':
+        return '再ログイン後にもう一度お試しください。';
+      case 'network-request-failed':
+        return 'ネットワークエラーが発生しました。接続を確認して再試行してください。';
+      default:
+        return 'アカウント削除に失敗しました: ${error.message ?? error.code}';
     }
   }
 
