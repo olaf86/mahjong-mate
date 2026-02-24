@@ -10,6 +10,26 @@ final ruleSetRepositoryProvider = Provider<RuleSetRepository>((ref) {
   return RuleSetRepository(FirebaseFirestore.instance);
 });
 
+final ruleSetsByOwnerProvider = StreamProvider.family<List<RuleSet>, String>((
+  ref,
+  ownerUid,
+) {
+  final repository = ref.watch(ruleSetRepositoryProvider);
+  return repository.watchRuleSets(ownerUid: ownerUid);
+});
+
+final followedRuleSetIdsByOwnerProvider =
+    StreamProvider.family<List<String>, String>((ref, ownerUid) {
+      final repository = ref.watch(ruleSetRepositoryProvider);
+      return repository.watchFollowedRuleSetIds(ownerUid: ownerUid);
+    });
+
+final followedRuleSetsByOwnerProvider =
+    StreamProvider.family<List<RuleSet>, String>((ref, ownerUid) {
+      final repository = ref.watch(ruleSetRepositoryProvider);
+      return repository.watchFollowedRuleSets(ownerUid: ownerUid);
+    });
+
 final ruleSetsProvider = StreamProvider<List<RuleSet>>((ref) async* {
   final ownerUid = await ref.watch(ownerUidProvider.future);
   final repository = ref.watch(ruleSetRepositoryProvider);
@@ -28,7 +48,10 @@ final followedRuleSetsProvider = StreamProvider<List<RuleSet>>((ref) async* {
   yield* repository.watchFollowedRuleSets(ownerUid: ownerUid);
 });
 
-final ruleSetByIdProvider = Provider.family<AsyncValue<RuleSet?>, String>((ref, id) {
+final ruleSetByIdProvider = Provider.family<AsyncValue<RuleSet?>, String>((
+  ref,
+  id,
+) {
   final ruleSets = ref.watch(ruleSetsProvider);
   return ruleSets.whenData((items) {
     for (final ruleSet in items) {
@@ -40,7 +63,10 @@ final ruleSetByIdProvider = Provider.family<AsyncValue<RuleSet?>, String>((ref, 
   });
 });
 
-final ruleSetByShareCodeProvider = FutureProvider.family<RuleSet?, String>((ref, code) async {
+final ruleSetByShareCodeProvider = FutureProvider.family<RuleSet?, String>((
+  ref,
+  code,
+) async {
   final normalized = normalizeShareCode(code);
   if (normalized.isEmpty) {
     return null;

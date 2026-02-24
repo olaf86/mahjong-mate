@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../shared/branding/app_logo.dart';
+import '../../../shared/auth/auth_user_provider.dart';
 import '../application/rule_sets_provider.dart';
 import '../domain/rule_category.dart';
 import '../domain/rule_set.dart';
@@ -21,7 +22,10 @@ class RuleSetListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ruleSets = ref.watch(followedRuleSetsProvider);
+    final ownerUid = ref.watch(currentUserUidProvider);
+    final ruleSets = ownerUid == null
+        ? const AsyncValue<List<RuleSet>>.loading()
+        : ref.watch(followedRuleSetsByOwnerProvider(ownerUid));
     final iconColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.8);
 
     return Scaffold(

@@ -10,6 +10,11 @@ final authStateProvider = StreamProvider<User?>((ref) {
   return auth.authStateChanges();
 });
 
+final currentUserUidProvider = Provider<String?>((ref) {
+  final authState = ref.watch(authStateProvider);
+  return authState.asData?.value?.uid;
+});
+
 final ownerUidProvider = FutureProvider<String>((ref) async {
   final auth = ref.watch(firebaseAuthProvider);
   final user = await ref.watch(authStateProvider.future);
