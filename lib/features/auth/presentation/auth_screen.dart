@@ -176,7 +176,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     ),
                     onPressed: _authBusy || !canDeleteAccount
                         ? null
-                        : () => _confirmAndDeleteAccount(context, auth),
+                        : () => _confirmAndDeleteAccount(auth),
                     icon: const Icon(Icons.delete_outline),
                     label: const Text('アカウントを削除'),
                   ),
@@ -197,16 +197,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
-      _showSnack(context, 'メールアドレスとパスワードを入力してください。');
+      _showSnack('メールアドレスとパスワードを入力してください。');
       return;
     }
     final validationMessage = _validateRegistrationPassword(password);
     if (validationMessage != null) {
-      _showSnack(context, validationMessage);
+      _showSnack(validationMessage);
       return;
     }
     if (user == null || !user.isAnonymous) {
-      _showSnack(context, 'この端末のデータを引き継ぐには匿名状態で登録してください。');
+      _showSnack('この端末のデータを引き継ぐには匿名状態で登録してください。');
       return;
     }
     setState(() => _authBusy = true);
@@ -218,10 +218,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       await user.linkWithCredential(credential);
       await _sendVerification(context, auth);
       await auth.currentUser?.reload();
-      _showSnack(context, 'アカウントを登録しました。認証メールをご確認ください。');
+      _showSnack('アカウントを登録しました。認証メールをご確認ください。');
       setState(() {});
     } on FirebaseAuthException catch (error) {
-      _showSnack(context, _authErrorMessage(error));
+      _showSnack(_authErrorMessage(error));
     } finally {
       if (mounted) {
         setState(() => _authBusy = false);
@@ -237,7 +237,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
-      _showSnack(context, 'メールアドレスとパスワードを入力してください。');
+      _showSnack('メールアドレスとパスワードを入力してください。');
       return;
     }
     if (user != null && user.isAnonymous) {
@@ -270,13 +270,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       final current = auth.currentUser;
       if (current != null && !current.emailVerified) {
         await _promptUnverified(context, auth);
-        _showSnack(context, 'ログインしました（未認証）。');
+        _showSnack('ログインしました（未認証）。');
       } else {
-        _showSnack(context, 'ログインしました。');
+        _showSnack('ログインしました。');
       }
       setState(() {});
     } on FirebaseAuthException catch (error) {
-      _showSnack(context, _authErrorMessage(error));
+      _showSnack(_authErrorMessage(error));
     } finally {
       if (mounted) {
         setState(() => _authBusy = false);
@@ -289,7 +289,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     try {
       await auth.signOut();
       await auth.signInAnonymously();
-      _showSnack(context, 'ログアウトしました。');
+      _showSnack('ログアウトしました。');
       setState(() {});
     } finally {
       if (mounted) {
@@ -298,63 +298,63 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
   }
 
-  Future<void> _confirmAndDeleteAccount(
-    BuildContext context,
-    FirebaseAuth auth,
-  ) async {
+  Future<void> _confirmAndDeleteAccount(FirebaseAuth auth) async {
     final confirmController = TextEditingController();
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            final canDelete = confirmController.text.trim() == '削除する';
-            return AlertDialog(
-              title: const Text('アカウント削除の確認'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'アカウントを削除します。作成したルールセットやフォロー中のルールセットなどが全てクリアされますが、本当によろしいでしょうか？',
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('確認のため「削除する」と入力してください。'),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: confirmController,
-                    onChanged: (_) => setDialogState(() {}),
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      hintText: '削除する',
+    try {
+      if (!mounted) return;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              final canDelete = confirmController.text.trim() == '削除する';
+              return AlertDialog(
+                title: const Text('アカウント削除の確認'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'アカウントを削除します。作成したルールセットやフォロー中のルールセットなどが全てクリアされますが、本当によろしいでしょうか？',
                     ),
+                    const SizedBox(height: 12),
+                    const Text('確認のため「削除する」と入力してください。'),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: confirmController,
+                      onChanged: (_) => setDialogState(() {}),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: '削除する',
+                      ),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('キャンセル'),
+                  ),
+                  FilledButton(
+                    onPressed: canDelete
+                        ? () => Navigator.of(context).pop(true)
+                        : null,
+                    child: const Text('削除する'),
                   ),
                 ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('キャンセル'),
-                ),
-                FilledButton(
-                  onPressed: canDelete
-                      ? () => Navigator.of(context).pop(true)
-                      : null,
-                  child: const Text('削除する'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-    confirmController.dispose();
-
-    if (confirmed != true) return;
-    await _deleteAccount(context, auth);
+              );
+            },
+          );
+        },
+      );
+      if (!mounted || confirmed != true) return;
+      await _deleteAccount(auth);
+    } finally {
+      confirmController.dispose();
+    }
   }
 
-  Future<void> _deleteAccount(BuildContext context, FirebaseAuth auth) async {
+  Future<void> _deleteAccount(FirebaseAuth auth) async {
     setState(() => _authBusy = true);
     try {
       final callable = FirebaseFunctions.instance.httpsCallable(
@@ -362,16 +362,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       );
       await callable.call();
       await auth.signInAnonymously();
-      _showSnack(context, 'アカウントを削除しました。');
+      _showSnack('アカウントを削除しました。');
       if (mounted) {
         setState(() {});
       }
     } on FirebaseFunctionsException catch (error) {
-      _showSnack(context, _accountDeleteFunctionErrorMessage(error));
+      _showSnack(_accountDeleteFunctionErrorMessage(error));
     } on FirebaseAuthException catch (error) {
-      _showSnack(context, _accountDeleteErrorMessage(error));
+      _showSnack(_accountDeleteErrorMessage(error));
     } catch (error) {
-      _showSnack(context, 'アカウント削除に失敗しました: $error');
+      _showSnack('アカウント削除に失敗しました: $error');
     } finally {
       if (mounted) {
         setState(() => _authBusy = false);
@@ -385,7 +385,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       final auth = ref.read(firebaseAuthProvider);
       await auth.currentUser?.reload();
       if (!silent && mounted) {
-        _showSnack(context, '認証状態を更新しました。');
+        _showSnack('認証状態を更新しました。');
       }
       if (mounted) {
         setState(() {});
@@ -405,9 +405,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     if (user == null || user.emailVerified) return;
     try {
       await user.sendEmailVerification();
-      _showSnack(context, '認証メールを送信しました。');
+      _showSnack('認証メールを送信しました。');
     } on FirebaseAuthException catch (error) {
-      _showSnack(context, _authErrorMessage(error));
+      _showSnack(_authErrorMessage(error));
     }
   }
 
@@ -439,10 +439,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     );
   }
 
-  void _showSnack(BuildContext context, String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+  void _showSnack(String message) {
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger.showSnackBar(SnackBar(content: Text(message)));
   }
 
   String _authStatusLabel(User? user) {
