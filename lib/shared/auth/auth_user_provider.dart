@@ -11,15 +11,17 @@ final authStateProvider = StreamProvider<User?>((ref) {
 });
 
 final currentUserUidProvider = Provider<String?>((ref) {
-  final authState = ref.watch(authStateProvider);
-  return authState.asData?.value?.uid;
+  final auth = ref.watch(firebaseAuthProvider);
+  ref.watch(authStateProvider);
+  return auth.currentUser?.uid;
 });
 
 final ownerUidProvider = FutureProvider<String>((ref) async {
   final auth = ref.watch(firebaseAuthProvider);
-  final user = await ref.watch(authStateProvider.future);
-  if (user != null) {
-    return user.uid;
+  ref.watch(authStateProvider);
+  final currentUser = auth.currentUser;
+  if (currentUser != null) {
+    return currentUser.uid;
   }
   final credential = await auth.signInAnonymously();
   return credential.user!.uid;

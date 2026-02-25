@@ -47,7 +47,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(firebaseAuthProvider);
-    final user = auth.currentUser;
+    final authState = ref.watch(authStateProvider);
+    final user = authState.asData?.value ?? auth.currentUser;
     final theme = Theme.of(context);
     final isAnonymousSession = user?.isAnonymous ?? false;
     final canUseCredentialAuth = user == null || isAnonymousSession;
@@ -118,18 +119,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: _authBusy
-                        ? null
-                        : () => _registerAccount(context, auth, user),
+                    onPressed: _authBusy ? null : () => _registerAccount(auth),
                     child: const Text('登録する'),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton(
-                    onPressed: _authBusy
-                        ? null
-                        : () => _signIn(context, auth, user),
+                    onPressed: _authBusy ? null : () => _signIn(auth),
                     child: const Text('ログイン'),
                   ),
                 ),
@@ -147,7 +144,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             Text('ログイン中の操作', style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: _authBusy ? null : () => _signOut(context, auth),
+              onPressed: _authBusy ? null : () => _signOut(auth),
               child: const Text('ログアウト'),
             ),
           ],
@@ -189,11 +186,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     );
   }
 
-  Future<void> _registerAccount(
-    BuildContext context,
-    FirebaseAuth auth,
-    User? user,
-  ) async {
+  Future<void> _registerAccount(FirebaseAuth auth) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
@@ -205,23 +198,33 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       _showSnack(validationMessage);
       return;
     }
+    final user = auth.currentUser;
     if (user == null || !user.isAnonymous) {
       _showSnack('この端末のデータを引き継ぐには匿名状態で登録してください。');
       return;
     }
     setState(() => _authBusy = true);
     try {
+      final beforeUid = user.uid;
       final credential = EmailAuthProvider.credential(
         email: email,
         password: password,
       );
       await user.linkWithCredential(credential);
-      await _sendVerification(context, auth);
       await auth.currentUser?.reload();
+      final afterUid = auth.currentUser?.uid;
+      if (afterUid == null || afterUid != beforeUid) {
+        await auth.signOut();
+        await auth.signInAnonymously();
+        throw StateError('匿名データを安全に引き継げなかったため、登録を中止しました。もう一度お試しください。');
+      }
+      await _sendVerification(auth);
       _showSnack('アカウントを登録しました。認証メールをご確認ください。');
       setState(() {});
     } on FirebaseAuthException catch (error) {
       _showSnack(_authErrorMessage(error));
+    } on StateError catch (error) {
+      _showSnack(error.message.toString());
     } finally {
       if (mounted) {
         setState(() => _authBusy = false);
@@ -229,18 +232,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
   }
 
-  Future<void> _signIn(
-    BuildContext context,
-    FirebaseAuth auth,
-    User? user,
-  ) async {
+  Future<void> _signIn(FirebaseAuth auth) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
     if (email.isEmpty || password.isEmpty) {
       _showSnack('メールアドレスとパスワードを入力してください。');
       return;
     }
-    if (user != null && user.isAnonymous) {
+    final currentUser = auth.currentUser;
+    if (currentUser != null && currentUser.isAnonymous) {
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) {
@@ -269,7 +269,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       await auth.signInWithEmailAndPassword(email: email, password: password);
       final current = auth.currentUser;
       if (current != null && !current.emailVerified) {
-        await _promptUnverified(context, auth);
+        await _promptUnverified(auth);
         _showSnack('ログインしました（未認証）。');
       } else {
         _showSnack('ログインしました。');
@@ -284,7 +284,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
   }
 
-  Future<void> _signOut(BuildContext context, FirebaseAuth auth) async {
+  Future<void> _signOut(FirebaseAuth auth) async {
     setState(() => _authBusy = true);
     try {
       await auth.signOut();
@@ -397,10 +397,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
   }
 
-  Future<void> _sendVerification(
-    BuildContext context,
-    FirebaseAuth auth,
-  ) async {
+  Future<void> _sendVerification(FirebaseAuth auth) async {
     final user = auth.currentUser;
     if (user == null || user.emailVerified) return;
     try {
@@ -411,10 +408,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     }
   }
 
-  Future<void> _promptUnverified(
-    BuildContext context,
-    FirebaseAuth auth,
-  ) async {
+  Future<void> _promptUnverified(FirebaseAuth auth) async {
     await showDialog<void>(
       context: context,
       builder: (context) {
@@ -429,7 +423,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             FilledButton(
               onPressed: () async {
                 Navigator.of(context).pop();
-                await _sendVerification(context, auth);
+                await _sendVerification(auth);
               },
               child: const Text('認証メールを送信'),
             ),
