@@ -48,8 +48,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(firebaseAuthProvider);
-    ref.watch(authStateProvider);
-    final user = auth.currentUser;
+    final authState = ref.watch(authStateProvider);
+    final user = authState.asData?.value;
     final theme = Theme.of(context);
     final isAnonymousSession = user?.isAnonymous ?? false;
     final canUseCredentialAuth = user == null || isAnonymousSession;
