@@ -17,6 +17,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   late final TextEditingController _emailController;
   late final TextEditingController _passwordController;
   bool _authBusy = false;
+  bool _refreshingOnResume = false;
 
   @override
   void initState() {
@@ -40,15 +41,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      _refreshAuthState(silent: true);
+      _refreshAuthStateOnResume();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(firebaseAuthProvider);
-    final authState = ref.watch(authStateProvider);
-    final user = authState.asData?.value ?? auth.currentUser;
+    ref.watch(authStateProvider);
+    final user = auth.currentUser;
     final theme = Theme.of(context);
     final isAnonymousSession = user?.isAnonymous ?? false;
     final canUseCredentialAuth = user == null || isAnonymousSession;
@@ -143,9 +144,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
             const SizedBox(height: 16),
             Text('ログイン中の操作', style: theme.textTheme.titleLarge),
             const SizedBox(height: 8),
-            TextButton(
-              onPressed: _authBusy ? null : () => _signOut(auth),
-              child: const Text('ログアウト'),
+            Align(
+              alignment: Alignment.center,
+              child: TextButton(
+                onPressed: _authBusy ? null : () => _confirmAndSignOut(auth),
+                child: const Text('ログアウト'),
+              ),
             ),
           ],
           const SizedBox(height: 24),
@@ -239,31 +243,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
       _showSnack('メールアドレスとパスワードを入力してください。');
       return;
     }
-    final currentUser = auth.currentUser;
-    if (currentUser != null && currentUser.isAnonymous) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: const Text('ログインの確認'),
-            content: const Text(
-              '既存アカウントにログインすると、この端末の未引き継ぎデータは表示されなくなります。続行しますか？',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('キャンセル'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('ログイン'),
-              ),
-            ],
-          );
-        },
-      );
-      if (confirmed != true) return;
-    }
     setState(() => _authBusy = true);
     try {
       await auth.signInWithEmailAndPassword(email: email, password: password);
@@ -282,6 +261,31 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
         setState(() => _authBusy = false);
       }
     }
+  }
+
+  Future<void> _confirmAndSignOut(FirebaseAuth auth) async {
+    if (!mounted) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('ログアウト確認'),
+          content: const Text('ログアウトしてもよろしいですか？'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('キャンセル'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('ログアウト'),
+            ),
+          ],
+        );
+      },
+    );
+    if (!mounted || confirmed != true) return;
+    await _signOut(auth);
   }
 
   Future<void> _signOut(FirebaseAuth auth) async {
@@ -380,20 +384,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   }
 
   Future<void> _refreshAuthState({bool silent = false}) async {
-    setState(() => _authBusy = true);
+    final auth = ref.read(firebaseAuthProvider);
+    String? errorMessage;
     try {
-      final auth = ref.read(firebaseAuthProvider);
       await auth.currentUser?.reload();
-      if (!silent && mounted) {
-        _showSnack('認証状態を更新しました。');
-      }
-      if (mounted) {
-        setState(() {});
-      }
+    } on FirebaseAuthException catch (error) {
+      errorMessage = _authErrorMessage(error);
+    } catch (_) {
+      errorMessage = '認証状態の更新に失敗しました。';
+    }
+    if (!mounted) return;
+    setState(() {});
+    if (!silent) {
+      _showSnack(errorMessage ?? '認証状態を更新しました。');
+    }
+  }
+
+  Future<void> _refreshAuthStateOnResume() async {
+    if (_refreshingOnResume) return;
+    _refreshingOnResume = true;
+    try {
+      await _refreshAuthState(silent: true);
+      await Future<void>.delayed(const Duration(seconds: 1));
+      if (!mounted) return;
+      await _refreshAuthState(silent: true);
     } finally {
-      if (mounted) {
-        setState(() => _authBusy = false);
-      }
+      _refreshingOnResume = false;
     }
   }
 
