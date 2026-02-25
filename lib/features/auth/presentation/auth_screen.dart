@@ -73,6 +73,32 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     _authStatusLabel(user),
                     style: theme.textTheme.bodyMedium,
                   ),
+                  if (user != null &&
+                      !user.isAnonymous &&
+                      !user.emailVerified) ...[
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton(
+                          onPressed: _authBusy ? null : _manualRefreshAuthState,
+                          child: const Text('認証状態を再確認'),
+                        ),
+                        OutlinedButton(
+                          onPressed: _authBusy
+                              ? null
+                              : () => _resendVerificationEmail(auth),
+                          child: const Text('認証メールを再送'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'メール内リンクを開いた後、この画面で再確認できます。',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
                   if (isAnonymousSession) ...[
                     const SizedBox(height: 8),
                     Text(
@@ -405,17 +431,61 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     _refreshingOnResume = true;
     try {
       await _refreshAuthState(silent: true);
-      await Future<void>.delayed(const Duration(seconds: 1));
-      if (!mounted) return;
-      await _refreshAuthState(silent: true);
+      final auth = ref.read(firebaseAuthProvider);
+      for (var attempt = 0; attempt < 15; attempt++) {
+        if (!mounted) return;
+        final user = auth.currentUser;
+        if (user == null || user.isAnonymous || user.emailVerified) {
+          return;
+        }
+        await Future<void>.delayed(const Duration(seconds: 2));
+        if (!mounted) return;
+        await _refreshAuthState(silent: true);
+      }
     } finally {
       _refreshingOnResume = false;
     }
   }
 
-  Future<void> _sendVerification(FirebaseAuth auth) async {
+  Future<void> _manualRefreshAuthState() async {
+    setState(() => _authBusy = true);
+    try {
+      await _refreshAuthState();
+    } finally {
+      if (mounted) {
+        setState(() => _authBusy = false);
+      }
+    }
+  }
+
+  Future<void> _resendVerificationEmail(FirebaseAuth auth) async {
+    setState(() => _authBusy = true);
+    try {
+      await _sendVerification(auth, showAlreadyVerifiedNotice: true);
+    } finally {
+      if (mounted) {
+        setState(() => _authBusy = false);
+      }
+    }
+  }
+
+  Future<void> _sendVerification(
+    FirebaseAuth auth, {
+    bool showAlreadyVerifiedNotice = false,
+  }) async {
     final user = auth.currentUser;
-    if (user == null || user.emailVerified) return;
+    if (user == null) {
+      if (showAlreadyVerifiedNotice) {
+        _showSnack('ログイン状態を確認できません。');
+      }
+      return;
+    }
+    if (user.emailVerified) {
+      if (showAlreadyVerifiedNotice) {
+        _showSnack('すでにメール認証済みです。');
+      }
+      return;
+    }
     try {
       await user.sendEmailVerification();
       _showSnack('認証メールを送信しました。');
