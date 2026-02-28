@@ -10,7 +10,8 @@
 - `mahjong_mate/.github/workflows/android-build-artifact.yml`
   - `main` push 時に AAB をビルドして Artifact 化
 - `mahjong_mate/.github/workflows/android-publish-play.yml`
-  - `workflow_dispatch` で手動実行し、Play Console の指定トラックへアップロード
+  - `main` push で自動実行し、Play Console の `internal` トラックへアップロード
+  - `workflow_dispatch` で手動実行時は `track` と `release_status` を指定可能
 
 ## GitHub Secrets
 

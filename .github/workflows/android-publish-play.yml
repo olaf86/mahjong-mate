@@ -1,6 +1,9 @@
 name: Android Publish to Play Console
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       track:
@@ -79,5 +82,5 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: dev.asobo.mahjongmate
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
-          track: ${{ inputs.track }}
-          status: ${{ inputs.release_status }}
+          track: ${{ github.event_name == 'workflow_dispatch' && inputs.track || 'internal' }}
+          status: ${{ github.event_name == 'workflow_dispatch' && inputs.release_status || 'completed' }}
