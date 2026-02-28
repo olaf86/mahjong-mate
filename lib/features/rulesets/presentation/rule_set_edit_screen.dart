@@ -338,7 +338,7 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           _RuleCard(
             title: '先付け',
             child: DropdownButtonFormField<SakizukeRule>(
-              value: _sakizuke,
+              initialValue: _sakizuke,
               items: const [
                 DropdownMenuItem(
                   value: SakizukeRule.complete,

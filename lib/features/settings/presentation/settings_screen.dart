@@ -38,9 +38,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('設定'),
-      ),
+      appBar: AppBar(title: const Text('設定')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         children: [
@@ -59,7 +57,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
           autoFollowAsync.when(
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
+            error: (error, stackTrace) => const SizedBox.shrink(),
             data: (value) {
               return SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -74,11 +72,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
           FilledButton(
             onPressed: () async {
-              await ref.read(ownerNameProvider.notifier).setOwnerName(_controller.text);
-              if (!mounted) return;
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('オーナー名を保存しました。')),
-              );
+              await ref
+                  .read(ownerNameProvider.notifier)
+                  .setOwnerName(_controller.text);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('オーナー名を保存しました。')));
             },
             child: const Text('保存する'),
           ),

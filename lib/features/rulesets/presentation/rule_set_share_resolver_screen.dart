@@ -44,9 +44,9 @@ class _RuleSetShareResolverScreenState
         if (!_navigated) {
           _navigated = true;
           WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (!mounted) return;
+            if (!context.mounted) return;
             await _maybeAutoFollow(ruleSet.id, autoFollowAsync.value);
-            if (!mounted) return;
+            if (!context.mounted) return;
             context.goNamed(
               'ruleset-detail',
               pathParameters: {'id': ruleSet.id},

@@ -105,6 +105,7 @@ Future<void> _toggleFollow(
   required String? ruleSetOwnerUid,
 }) async {
   final ownerUid = await ref.read(ownerUidProvider.future);
+  if (!context.mounted) return;
   if (ruleSetOwnerUid != null && ownerUid == ruleSetOwnerUid) {
     return;
   }
@@ -304,7 +305,9 @@ class _HeaderCard extends StatelessWidget {
                   label: '共有URL',
                   value: shareUrl,
                   onCopy: () => _copyText(context, shareUrl),
-                  onShare: () => Share.share(shareUrl),
+                  onShare: () {
+                    SharePlus.instance.share(ShareParams(text: shareUrl));
+                  },
                 ),
                 const SizedBox(height: 8),
                 Text(

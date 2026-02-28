@@ -26,7 +26,9 @@ class RuleSetListScreen extends ConsumerWidget {
     final ruleSets = ownerUid == null
         ? const AsyncValue<List<RuleSet>>.loading()
         : ref.watch(followedRuleSetsByOwnerProvider(ownerUid));
-    final iconColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.8);
+    final iconColor = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.8);
 
     return Scaffold(
       floatingActionButton: FloatingActionButton.extended(
@@ -51,7 +53,7 @@ class RuleSetListScreen extends ConsumerWidget {
                       child: BackdropFilter(
                         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
                         child: Container(
-                          color: Colors.white.withOpacity(0.001),
+                          color: Colors.white.withValues(alpha: 0.001),
                         ),
                       ),
                     ),

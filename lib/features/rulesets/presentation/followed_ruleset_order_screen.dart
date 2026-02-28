@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/auth/auth_user_provider.dart';
 import '../application/rule_sets_provider.dart';
-import '../data/rule_set_repository.dart';
 import '../domain/rule_set.dart';
 
 class FollowedRuleSetOrderScreen extends ConsumerStatefulWidget {
@@ -25,9 +24,7 @@ class _FollowedRuleSetOrderScreenState
     const itemRadius = BorderRadius.all(Radius.circular(14));
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('並び替え'),
-      ),
+      appBar: AppBar(title: const Text('並び替え')),
       body: ruleSets.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text(error.toString())),
@@ -39,11 +36,11 @@ class _FollowedRuleSetOrderScreenState
           return ReorderableListView.builder(
             buildDefaultDragHandles: false,
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            proxyDecorator: (child, _, __) {
+            proxyDecorator: (child, dragIndex, animation) {
               return Material(
                 elevation: 6,
                 color: Colors.transparent,
-                shadowColor: Colors.black.withOpacity(0.2),
+                shadowColor: Colors.black.withValues(alpha: 0.2),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: theme.cardColor,
@@ -65,7 +62,7 @@ class _FollowedRuleSetOrderScreenState
                   shape: RoundedRectangleBorder(
                     borderRadius: itemRadius,
                     side: BorderSide(
-                      color: theme.dividerColor.withOpacity(0.45),
+                      color: theme.dividerColor.withValues(alpha: 0.45),
                     ),
                   ),
                   child: ListTile(
@@ -84,7 +81,8 @@ class _FollowedRuleSetOrderScreenState
                 ),
               );
             },
-            onReorder: (oldIndex, newIndex) => _onReorder(list, oldIndex, newIndex),
+            onReorder: (oldIndex, newIndex) =>
+                _onReorder(list, oldIndex, newIndex),
           );
         },
       ),
@@ -106,7 +104,11 @@ class _FollowedRuleSetOrderScreenState
     return true;
   }
 
-  Future<void> _onReorder(List<RuleSet> list, int oldIndex, int newIndex) async {
+  Future<void> _onReorder(
+    List<RuleSet> list,
+    int oldIndex,
+    int newIndex,
+  ) async {
     if (newIndex > oldIndex) {
       newIndex -= 1;
     }
