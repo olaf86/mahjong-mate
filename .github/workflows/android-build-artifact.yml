@@ -37,12 +37,18 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Compute build number
+        shell: bash
+        run: |
+          BUILD_NUMBER=$((GITHUB_RUN_NUMBER * 100 + GITHUB_RUN_ATTEMPT))
+          echo "BUILD_NUMBER=${BUILD_NUMBER}" >> "$GITHUB_ENV"
+
       - name: Build AAB (release)
-        run: flutter build appbundle --release
+        run: flutter build appbundle --release --build-number="${BUILD_NUMBER}"
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-aab
+          name: app-release-aab-${{ env.BUILD_NUMBER }}
           path: build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
