@@ -17,8 +17,10 @@ appId: dev.asobo.mahjongmate
 - back
 - tapOn:
     id: "action-new-ruleset"
-- assertVisible:
-    id: "screen-ruleset-edit"
+- extendedWaitUntil:
+    visible: "ルールセット名"
+    timeout: 10000
+- assertVisible: "ルールセット名"
 - scrollUntilVisible:
     element: "流し満貫"
     direction: DOWN
