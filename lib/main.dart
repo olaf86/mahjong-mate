@@ -32,20 +32,31 @@ Future<void> main() async {
 }
 
 Future<void> _initializeFirebase() async {
-  if (useFirebaseEmulators) {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'demo-api-key',
-        appId: '1:1234567890:android:demo-mahjong-mate',
-        messagingSenderId: '1234567890',
-        projectId: 'mahjong-mate-app',
-        storageBucket: 'mahjong-mate-app.appspot.com',
-      ),
-    );
+  if (Firebase.apps.any((app) => app.name == defaultFirebaseAppName)) {
     return;
   }
 
-  await Firebase.initializeApp();
+  try {
+    if (useFirebaseEmulators) {
+      await Firebase.initializeApp(
+        options: const FirebaseOptions(
+          apiKey: 'demo-api-key',
+          appId: '1:1234567890:android:demo-mahjong-mate',
+          messagingSenderId: '1234567890',
+          projectId: 'mahjong-mate-app',
+          storageBucket: 'mahjong-mate-app.appspot.com',
+        ),
+      );
+      return;
+    }
+
+    await Firebase.initializeApp();
+  } on FirebaseException catch (error) {
+    if (error.code == 'duplicate-app') {
+      return;
+    }
+    rethrow;
+  }
 }
 
 Future<void> _configureFirebaseServices() async {
