@@ -13,6 +13,13 @@
 
 この構成により、撮影時のデータはすべてローカルエミュレータ内に閉じる。
 
+## 成果物の出力先
+
+- Android: `artifacts/store_screenshots/android/`
+- iOS: `artifacts/store_screenshots/ios/`
+
+`takeScreenshot` の保存先を flow で固定しているため、プロジェクトルート直下に散らばらない。
+
 ## 事前準備
 
 1. Firebase CLI をインストール
@@ -82,6 +89,7 @@ maestro test maestro/flows/ios/store_screenshots.yaml
 ## ダミーデータ方針
 
 - 基本は Maestro フロー内の入力操作でダミーデータを作る。
+- Maestro の入力互換性のため、`inputText` は ASCII 文字（英数字）を使う。
 - 既存データに依存しないように `launchApp.clearState: true` を使う。
 - より厳密に固定したい場合は、後続で Firestore Emulator の import/export を導入する。
 

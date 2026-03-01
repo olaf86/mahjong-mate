@@ -3,19 +3,19 @@ appId: dev.asobo.mahjongmate
 - launchApp:
     clearState: true
 - assertVisible: "雀メイト"
-- takeScreenshot: "ios_01_list"
+- takeScreenshot: "artifacts/store_screenshots/ios/ios_01_list"
 - tapOn: "新規作成"
 - assertVisible: "ルールセット作成"
 - tapOn: "ルールセット名"
-- inputText: "スクショ用ルール"
+- inputText: "screenshot-rule-01"
 - hideKeyboard
 - tapOn: "説明"
-- inputText: "スクリーンショット撮影用のダミーデータ"
+- inputText: "Dummy data for store screenshots"
 - hideKeyboard
 - scrollUntilVisible:
     element: "流し満貫"
     direction: DOWN
-- takeScreenshot: "ios_02_edit"
+- takeScreenshot: "artifacts/store_screenshots/ios/ios_02_edit"
 - tapOn: "保存"
-- assertVisible: "スクショ用ルール"
-- takeScreenshot: "ios_03_list_after_save"
+- assertVisible: "screenshot-rule-01"
+- takeScreenshot: "artifacts/store_screenshots/ios/ios_03_list_after_save"
