@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'core/firebase/firebase_init_error_screen.dart';
 import 'routing/app_router.dart';
+import 'shared/config/runtime_mode.dart';
 import 'theme/app_theme.dart';
 
 class MahjongMateApp extends StatefulWidget {
@@ -57,6 +58,7 @@ class _MahjongMateAppState extends State<MahjongMateApp> {
       return MaterialApp(
         title: 'Mahjong Mate',
         theme: AppTheme.lightTheme,
+        debugShowCheckedModeBanner: !screenshotMode,
         home: FirebaseInitErrorScreen(error: widget.initError),
       );
     }
@@ -64,6 +66,7 @@ class _MahjongMateAppState extends State<MahjongMateApp> {
     return MaterialApp.router(
       title: 'Mahjong Mate',
       theme: AppTheme.lightTheme,
+      debugShowCheckedModeBanner: !screenshotMode,
       routerConfig: appRouter,
     );
   }
