@@ -16,7 +16,7 @@ Future<void> main() async {
   FlutterNativeSplash.preserve(widgetsBinding: binding);
   Object? initError;
   try {
-    await Firebase.initializeApp();
+    await _initializeFirebase();
     await _configureFirebaseServices();
     if (FirebaseAuth.instance.currentUser == null) {
       await FirebaseAuth.instance.signInAnonymously();
@@ -29,6 +29,23 @@ Future<void> main() async {
   }
 
   runApp(ProviderScope(child: MahjongMateApp(initError: initError)));
+}
+
+Future<void> _initializeFirebase() async {
+  if (useFirebaseEmulators) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: 'demo-api-key',
+        appId: '1:1234567890:android:demo-mahjong-mate',
+        messagingSenderId: '1234567890',
+        projectId: 'mahjong-mate-app',
+        storageBucket: 'mahjong-mate-app.appspot.com',
+      ),
+    );
+    return;
+  }
+
+  await Firebase.initializeApp();
 }
 
 Future<void> _configureFirebaseServices() async {

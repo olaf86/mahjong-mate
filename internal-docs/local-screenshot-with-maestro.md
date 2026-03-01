@@ -28,6 +28,11 @@
 
 実装上、`USE_FIREBASE_EMULATORS=true` のときは App Check を有効化しない。
 
+## 実行時の注意
+
+- スクリーンショット取得時は、iOS Simulator と Android Emulator を同時に起動しない。
+- `flutter run` は毎回対象デバイスを1つに固定して実行する（`-d` を必ず指定）。
+
 ## Android 実行手順
 
 ### 1. Firebase Emulator を起動
