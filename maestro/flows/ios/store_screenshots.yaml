@@ -2,15 +2,23 @@ appId: dev.asobo.mahjongmate
 ---
 - launchApp:
     clearState: true
-- assertVisible: "雀メイト"
+- extendedWaitUntil:
+    visible:
+      id: "screen-ruleset-list"
+    timeout: 15000
+- assertVisible:
+    id: "ruleset-card-rs_weekend_friends"
 - takeScreenshot: "artifacts/store_screenshots/ios/ios_01_list"
-- assertVisible: "友だちと週末麻雀"
-- tapOn: "友だちと週末麻雀"
-- assertVisible: "共有コード"
+- tapOn:
+    id: "ruleset-card-rs_weekend_friends"
+- assertVisible:
+    id: "ruleset-share-code"
 - takeScreenshot: "artifacts/store_screenshots/ios/ios_02_detail"
 - back
-- tapOn: "新規作成"
-- assertVisible: "ルールセット作成"
+- tapOn:
+    id: "action-new-ruleset"
+- assertVisible:
+    id: "screen-ruleset-edit"
 - scrollUntilVisible:
     element: "流し満貫"
     direction: DOWN

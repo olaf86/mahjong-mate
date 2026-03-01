@@ -31,19 +31,24 @@ class RuleSetListScreen extends ConsumerWidget {
     ).colorScheme.onSurface.withValues(alpha: 0.8);
 
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.goNamed('ruleset-new'),
-        icon: const Icon(Icons.add),
-        label: const Text('新規作成'),
+      floatingActionButton: Semantics(
+        identifier: 'action-new-ruleset',
+        child: FloatingActionButton.extended(
+          onPressed: () => context.goNamed('ruleset-new'),
+          icon: const Icon(Icons.add),
+          label: const Text('新規作成'),
+        ),
       ),
       body: SafeArea(
-        child: ruleSets.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _ErrorState(error: error),
-          data: (items) => Stack(
-            children: [
-              CustomScrollView(
-                slivers: [
+        child: Semantics(
+          identifier: 'screen-ruleset-list',
+          child: ruleSets.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => _ErrorState(error: error),
+            data: (items) => Stack(
+              children: [
+                CustomScrollView(
+                  slivers: [
                   SliverAppBar(
                     pinned: true,
                     backgroundColor: Colors.transparent,
@@ -131,9 +136,10 @@ class RuleSetListScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
-                ],
-              ),
-            ],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -213,18 +219,21 @@ class _RuleSetCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: Card(
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => context.goNamed(
-            'ruleset-detail',
-            pathParameters: {'id': ruleSet.id},
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(18),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      child: Semantics(
+        identifier: 'ruleset-card-${ruleSet.id}',
+        button: true,
+        child: Card(
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => context.goNamed(
+              'ruleset-detail',
+              pathParameters: {'id': ruleSet.id},
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Row(
                   children: [
                     Expanded(
@@ -299,7 +308,8 @@ class _RuleSetCard extends StatelessWidget {
                     ],
                   ],
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

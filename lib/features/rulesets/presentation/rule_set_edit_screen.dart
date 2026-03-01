@@ -190,9 +190,11 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-        children: [
+      body: Semantics(
+        identifier: 'screen-ruleset-edit',
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          children: [
           TextField(
             controller: _nameController,
             decoration: const InputDecoration(labelText: 'ルールセット名'),
@@ -609,7 +611,8 @@ class _RuleSetEditScreenState extends ConsumerState<RuleSetEditScreen> {
             onPressed: _saving ? null : () => _save(ruleSet),
             child: Text(_saving ? '保存中...' : '保存する'),
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

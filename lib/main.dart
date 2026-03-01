@@ -82,27 +82,45 @@ Future<void> _configureFirebaseServices() async {
 
 Future<void> _signInInitialUser() async {
   final auth = FirebaseAuth.instance;
-  if (auth.currentUser != null) {
-    return;
-  }
-
   if (useFirebaseEmulators && screenshotMode) {
+    final current = auth.currentUser;
+    if (current?.email == screenshotAuthEmail && current?.isAnonymous == false) {
+      debugPrint('Screenshot auth already active: uid=${current!.uid}');
+      return;
+    }
+
+    if (current != null) {
+      await auth.signOut();
+    }
+
     try {
       await auth.signInWithEmailAndPassword(
         email: screenshotAuthEmail,
         password: screenshotAuthPassword,
       );
-      return;
-    } on FirebaseAuthException catch (error) {
-      if (error.code != 'user-not-found') {
-        rethrow;
-      }
-      await auth.createUserWithEmailAndPassword(
-        email: screenshotAuthEmail,
-        password: screenshotAuthPassword,
+      final signedIn = auth.currentUser;
+      debugPrint(
+        'Signed in for screenshot mode: uid=${signedIn?.uid}, email=${signedIn?.email}',
       );
       return;
+    } on FirebaseAuthException catch (error) {
+      if (error.code == 'user-not-found') {
+        await auth.createUserWithEmailAndPassword(
+          email: screenshotAuthEmail,
+          password: screenshotAuthPassword,
+        );
+        final created = auth.currentUser;
+        debugPrint(
+          'Created screenshot user: uid=${created?.uid}, email=${created?.email}',
+        );
+        return;
+      }
+      rethrow;
     }
+  }
+
+  if (auth.currentUser != null) {
+    return;
   }
 
   await auth.signInAnonymously();
