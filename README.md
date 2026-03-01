@@ -16,6 +16,7 @@ Non-public operational/development docs are kept in:
 - `internal-docs/share-links.md`
 - `internal-docs/xcode-cloud.md`
 - `internal-docs/github-pages-privacy-policy.md`
+- `internal-docs/local-screenshot-with-maestro.md`
 
 ## Privacy Policy
 

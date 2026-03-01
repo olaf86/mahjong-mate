@@ -1,0 +1,21 @@
+appId: dev.asobo.mahjongmate
+---
+- launchApp:
+    clearState: true
+- assertVisible: "雀メイト"
+- takeScreenshot: "android_01_list"
+- tapOn: "新規作成"
+- assertVisible: "ルールセット作成"
+- tapOn: "ルールセット名"
+- inputText: "スクショ用ルール"
+- hideKeyboard
+- tapOn: "説明"
+- inputText: "スクリーンショット撮影用のダミーデータ"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "流し満貫"
+    direction: DOWN
+- takeScreenshot: "android_02_edit"
+- tapOn: "保存"
+- assertVisible: "スクショ用ルール"
+- takeScreenshot: "android_03_list_after_save"
