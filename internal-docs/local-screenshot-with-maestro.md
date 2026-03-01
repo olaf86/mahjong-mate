@@ -77,6 +77,12 @@ flutter run \
 maestro test maestro/flows/android/store_screenshots.yaml
 ```
 
+または、seed から自動でまとめて実行:
+
+```bash
+./scripts/run_screenshots_android.sh
+```
+
 ## iOS 実行手順
 
 ### 1. Firebase Emulator を起動
@@ -106,6 +112,12 @@ flutter run \
 
 ```bash
 maestro test maestro/flows/ios/store_screenshots.yaml
+```
+
+または、seed から自動でまとめて実行:
+
+```bash
+./scripts/run_screenshots_ios.sh
 ```
 
 ## ダミーデータ方針

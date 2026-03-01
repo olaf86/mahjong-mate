@@ -12,7 +12,6 @@ const db = admin.firestore();
 const auth = admin.auth();
 
 const screenshotUser = {
-  uid: 'screenshot-owner-001',
   email: 'screenshot@example.com',
   password: 'Passw0rd!',
   displayName: '雀メイト運営',
@@ -99,10 +98,10 @@ const ruleSets = [
 ];
 
 async function ensureUser() {
+  let userRecord;
   try {
-    const existing = await auth.getUser(screenshotUser.uid);
-    await auth.updateUser(existing.uid, {
-      email: screenshotUser.email,
+    userRecord = await auth.getUserByEmail(screenshotUser.email);
+    await auth.updateUser(userRecord.uid, {
       password: screenshotUser.password,
       displayName: screenshotUser.displayName,
       emailVerified: true,
@@ -111,14 +110,17 @@ async function ensureUser() {
     if (error.code !== 'auth/user-not-found') {
       throw error;
     }
-    await auth.createUser({
-      uid: screenshotUser.uid,
+    userRecord = await auth.createUser({
       email: screenshotUser.email,
       password: screenshotUser.password,
       displayName: screenshotUser.displayName,
       emailVerified: true,
     });
   }
+  return {
+    ...screenshotUser,
+    uid: userRecord.uid,
+  };
 }
 
 async function deleteCollectionDocs(collectionRef) {
@@ -130,10 +132,10 @@ async function deleteCollectionDocs(collectionRef) {
   }
 }
 
-async function resetOwnerData() {
+async function resetOwnerData(ownerUid) {
   const ownRules = await db
     .collection('rule_sets')
-    .where('ownerUid', '==', screenshotUser.uid)
+    .where('ownerUid', '==', ownerUid)
     .get();
   if (!ownRules.empty) {
     const batch = db.batch();
@@ -142,7 +144,7 @@ async function resetOwnerData() {
   }
 
   await deleteCollectionDocs(
-    db.collection('users').doc(screenshotUser.uid).collection('follows'),
+    db.collection('users').doc(ownerUid).collection('follows'),
   );
 }
 
@@ -176,13 +178,13 @@ function buildItems(name) {
   ];
 }
 
-async function seedRuleSets() {
+async function seedRuleSets(user) {
   for (const [index, ruleSet] of ruleSets.entries()) {
     await db.collection('rule_sets').doc(ruleSet.id).set({
       name: ruleSet.name,
       description: ruleSet.description,
-      ownerName: screenshotUser.displayName,
-      ownerUid: screenshotUser.uid,
+      ownerName: user.displayName,
+      ownerUid: user.uid,
       shareCode: ruleSet.shareCode,
       visibility: ruleSet.visibility,
       updatedAt: now(),
@@ -192,27 +194,27 @@ async function seedRuleSets() {
 
     await db
       .collection('users')
-      .doc(screenshotUser.uid)
+      .doc(user.uid)
       .collection('follows')
       .doc(ruleSet.id)
       .set({
         order: index,
         ruleSetId: ruleSet.id,
-        ruleSetOwnerUid: screenshotUser.uid,
+        ruleSetOwnerUid: user.uid,
         followedAt: now(),
       });
   }
 }
 
 async function main() {
-  await ensureUser();
-  await resetOwnerData();
-  await seedRuleSets();
+  const user = await ensureUser();
+  await resetOwnerData(user.uid);
+  await seedRuleSets(user);
 
   console.log('Seed completed for screenshot mode.');
   console.log(`projectId: ${projectId}`);
-  console.log(`uid: ${screenshotUser.uid}`);
-  console.log(`email: ${screenshotUser.email}`);
+  console.log(`uid: ${user.uid}`);
+  console.log(`email: ${user.email}`);
   console.log('rule_sets:', ruleSets.map((item) => item.id).join(', '));
 }
 
