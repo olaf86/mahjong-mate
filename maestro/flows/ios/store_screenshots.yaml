@@ -7,15 +7,15 @@ appId: dev.asobo.mahjongmate
 - tapOn: "新規作成"
 - assertVisible: "ルールセット作成"
 - tapOn: "ルールセット名"
-- inputText: "screenshot-rule-01"
+- inputText: "Weekend Mahjong"
 - hideKeyboard
 - tapOn: "説明"
-- inputText: "Dummy data for store screenshots"
+- inputText: "Create, save, and share rules with friends."
 - hideKeyboard
 - scrollUntilVisible:
     element: "流し満貫"
     direction: DOWN
 - takeScreenshot: "artifacts/store_screenshots/ios/ios_02_edit"
 - tapOn: "保存"
-- assertVisible: "screenshot-rule-01"
+- assertVisible: "Weekend Mahjong"
 - takeScreenshot: "artifacts/store_screenshots/ios/ios_03_list_after_save"
