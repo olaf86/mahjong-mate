@@ -18,9 +18,7 @@ Future<void> main() async {
   try {
     await _initializeFirebase();
     await _configureFirebaseServices();
-    if (FirebaseAuth.instance.currentUser == null) {
-      await FirebaseAuth.instance.signInAnonymously();
-    }
+    await _signInInitialUser();
   } catch (error) {
     initError = error;
   } finally {
@@ -80,4 +78,32 @@ Future<void> _configureFirebaseServices() async {
         ? const AppleDebugProvider()
         : const AppleAppAttestWithDeviceCheckFallbackProvider(),
   );
+}
+
+Future<void> _signInInitialUser() async {
+  final auth = FirebaseAuth.instance;
+  if (auth.currentUser != null) {
+    return;
+  }
+
+  if (useFirebaseEmulators && screenshotMode) {
+    try {
+      await auth.signInWithEmailAndPassword(
+        email: screenshotAuthEmail,
+        password: screenshotAuthPassword,
+      );
+      return;
+    } on FirebaseAuthException catch (error) {
+      if (error.code != 'user-not-found') {
+        rethrow;
+      }
+      await auth.createUserWithEmailAndPassword(
+        email: screenshotAuthEmail,
+        password: screenshotAuthPassword,
+      );
+      return;
+    }
+  }
+
+  await auth.signInAnonymously();
 }

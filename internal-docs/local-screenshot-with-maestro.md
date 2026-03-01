@@ -45,19 +45,33 @@
 ### 1. Firebase Emulator を起動
 
 ```bash
-firebase emulators:start --only auth,firestore,functions
+firebase emulators:start --project mahjong-mate-app --only auth,firestore,functions
 ```
 
-### 2. アプリを emulator 向けに起動
+### 2. スクリーンショット用ダミーデータを投入
+
+```bash
+(cd functions && npm run seed:screenshot)
+```
+
+投入されるシナリオ例:
+- 友だちと週末麻雀
+- サークル標準ルール
+- 大会向け競技ルール
+- ローカルハウスルール
+
+### 3. アプリを emulator 向けに起動
 
 ```bash
 flutter run \
   -d emulator-5554 \
   --dart-define=USE_FIREBASE_EMULATORS=true \
-  --dart-define=SCREENSHOT_MODE=true
+  --dart-define=SCREENSHOT_MODE=true \
+  --dart-define=SCREENSHOT_AUTH_EMAIL=screenshot@example.com \
+  --dart-define=SCREENSHOT_AUTH_PASSWORD=Passw0rd!
 ```
 
-### 3. Maestro フロー実行
+### 4. Maestro フロー実行
 
 ```bash
 maestro test maestro/flows/android/store_screenshots.yaml
@@ -68,19 +82,27 @@ maestro test maestro/flows/android/store_screenshots.yaml
 ### 1. Firebase Emulator を起動
 
 ```bash
-firebase emulators:start --only auth,firestore,functions
+firebase emulators:start --project mahjong-mate-app --only auth,firestore,functions
 ```
 
-### 2. アプリを simulator 向けに起動
+### 2. スクリーンショット用ダミーデータを投入
+
+```bash
+(cd functions && npm run seed:screenshot)
+```
+
+### 3. アプリを simulator 向けに起動
 
 ```bash
 flutter run \
   -d "iPhone 15 Pro" \
   --dart-define=USE_FIREBASE_EMULATORS=true \
-  --dart-define=SCREENSHOT_MODE=true
+  --dart-define=SCREENSHOT_MODE=true \
+  --dart-define=SCREENSHOT_AUTH_EMAIL=screenshot@example.com \
+  --dart-define=SCREENSHOT_AUTH_PASSWORD=Passw0rd!
 ```
 
-### 3. Maestro フロー実行
+### 4. Maestro フロー実行
 
 ```bash
 maestro test maestro/flows/ios/store_screenshots.yaml
@@ -88,8 +110,8 @@ maestro test maestro/flows/ios/store_screenshots.yaml
 
 ## ダミーデータ方針
 
-- 基本は Maestro フロー内の入力操作でダミーデータを作る。
-- Maestro の入力互換性のため、`inputText` は ASCII 文字（英数字）を使う。
+- ダミーデータは seed スクリプトで事前投入する。
+- Maestro フローは入力最小化（画面遷移と撮影のみ）にする。
 - 既存データに依存しないように `launchApp.clearState: true` を使う。
 - より厳密に固定したい場合は、後続で Firestore Emulator の import/export を導入する。
 

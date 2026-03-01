@@ -4,18 +4,14 @@ appId: dev.asobo.mahjongmate
     clearState: true
 - assertVisible: "雀メイト"
 - takeScreenshot: "artifacts/store_screenshots/android/android_01_list"
+- assertVisible: "友だちと週末麻雀"
+- tapOn: "友だちと週末麻雀"
+- assertVisible: "共有コード"
+- takeScreenshot: "artifacts/store_screenshots/android/android_02_detail"
+- back
 - tapOn: "新規作成"
 - assertVisible: "ルールセット作成"
-- tapOn: "ルールセット名"
-- inputText: "Weekend Mahjong"
-- hideKeyboard
-- tapOn: "説明"
-- inputText: "Create, save, and share rules with friends."
-- hideKeyboard
 - scrollUntilVisible:
     element: "流し満貫"
     direction: DOWN
-- takeScreenshot: "artifacts/store_screenshots/android/android_02_edit"
-- tapOn: "保存"
-- assertVisible: "Weekend Mahjong"
-- takeScreenshot: "artifacts/store_screenshots/android/android_03_list_after_save"
+- takeScreenshot: "artifacts/store_screenshots/android/android_03_edit_template"
