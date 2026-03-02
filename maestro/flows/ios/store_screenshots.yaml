@@ -14,7 +14,8 @@ appId: dev.asobo.mahjongmate
 - assertVisible:
     id: "ruleset-share-code"
 - takeScreenshot: "artifacts/store_screenshots/ios/ios_02_detail"
-- back
+- tapOn:
+    id: "action-back-from-detail"
 - tapOn:
     id: "action-new-ruleset"
 - extendedWaitUntil:

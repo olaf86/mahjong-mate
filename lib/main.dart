@@ -84,11 +84,6 @@ Future<void> _signInInitialUser() async {
   final auth = FirebaseAuth.instance;
   if (useFirebaseEmulators && screenshotMode) {
     final current = auth.currentUser;
-    if (current?.email == screenshotAuthEmail && current?.isAnonymous == false) {
-      debugPrint('Screenshot auth already active: uid=${current!.uid}');
-      return;
-    }
-
     if (current != null) {
       await auth.signOut();
     }

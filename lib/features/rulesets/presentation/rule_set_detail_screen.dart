@@ -43,6 +43,13 @@ class RuleSetDetailScreen extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(
+            leading: Semantics(
+              identifier: 'action-back-from-detail',
+              button: true,
+              child: BackButton(
+                onPressed: () => context.goNamed('ruleset-list'),
+              ),
+            ),
             title: Text(ruleSet.name),
             actions: [
               if (!isOwner)
