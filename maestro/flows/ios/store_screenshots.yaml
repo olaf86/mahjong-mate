@@ -1,0 +1,28 @@
+appId: dev.asobo.mahjongmate
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible:
+      id: "screen-ruleset-list"
+    timeout: 15000
+- assertVisible:
+    id: "ruleset-card-rs_weekend_friends"
+- takeScreenshot: "artifacts/store_screenshots/ios/ios_01_list"
+- tapOn:
+    id: "ruleset-card-rs_weekend_friends"
+- assertVisible:
+    id: "ruleset-share-code"
+- takeScreenshot: "artifacts/store_screenshots/ios/ios_02_detail"
+- tapOn:
+    id: "action-back-from-detail"
+- tapOn:
+    id: "action-new-ruleset"
+- extendedWaitUntil:
+    visible: "ルールセット名"
+    timeout: 10000
+- assertVisible: "ルールセット名"
+- scrollUntilVisible:
+    element: "流し満貫"
+    direction: DOWN
+- takeScreenshot: "artifacts/store_screenshots/ios/ios_03_edit_template"

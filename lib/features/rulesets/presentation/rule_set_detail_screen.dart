@@ -43,6 +43,13 @@ class RuleSetDetailScreen extends ConsumerWidget {
 
         return Scaffold(
           appBar: AppBar(
+            leading: Semantics(
+              identifier: 'action-back-from-detail',
+              button: true,
+              child: BackButton(
+                onPressed: () => context.goNamed('ruleset-list'),
+              ),
+            ),
             title: Text(ruleSet.name),
             actions: [
               if (!isOwner)
@@ -74,21 +81,24 @@ class RuleSetDetailScreen extends ConsumerWidget {
               ),
             ],
           ),
-          body: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-            children: [
-              _HeaderCard(
-                name: ruleSet.name,
-                description: ruleSet.description,
-                ownerName: ruleSet.ownerName,
-                shareCode: ruleSet.shareCode,
-                isPublic: ruleSet.isPublic,
-                updatedAtLabel: ruleSet.updatedAtLabel,
-              ),
-              const SizedBox(height: 16),
-              if (ruleSet.rules != null)
-                _RuleSummarySection(rules: ruleSet.rules!),
-            ],
+          body: Semantics(
+            identifier: 'screen-ruleset-detail',
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+              children: [
+                _HeaderCard(
+                  name: ruleSet.name,
+                  description: ruleSet.description,
+                  ownerName: ruleSet.ownerName,
+                  shareCode: ruleSet.shareCode,
+                  isPublic: ruleSet.isPublic,
+                  updatedAtLabel: ruleSet.updatedAtLabel,
+                ),
+                const SizedBox(height: 16),
+                if (ruleSet.rules != null)
+                  _RuleSummarySection(rules: ruleSet.rules!),
+              ],
+            ),
           ),
         );
       },
@@ -221,33 +231,36 @@ class _HeaderCard extends StatelessWidget {
                 ],
               ),
               if (shareCode != null)
-                SizedBox(
-                  width: double.infinity,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.share, size: 18),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        fit: FlexFit.loose,
-                        child: Text(
-                          '共有コード $shareCode',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                Semantics(
+                  identifier: 'ruleset-share-code',
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.share, size: 18),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          fit: FlexFit.loose,
+                          child: Text(
+                            '共有コード $shareCode',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      TextButton(
-                        onPressed: () =>
-                            _openShareSheet(context, shareCode!, shareUrl!),
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          visualDensity: VisualDensity.compact,
+                        const SizedBox(width: 12),
+                        TextButton(
+                          onPressed: () =>
+                              _openShareSheet(context, shareCode!, shareUrl!),
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                          child: const Text('共有'),
                         ),
-                        child: const Text('共有'),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               Row(
