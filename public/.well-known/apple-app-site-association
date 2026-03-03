@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "48C76HC76Y.com.example.mahjong-mate",
+        "appID": "48C76HC76Y.dev.asobo.mahjongmate",
         "paths": ["/r/*"]
       }
     ]
