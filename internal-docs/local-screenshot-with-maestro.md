@@ -17,6 +17,7 @@
 
 - Android: `artifacts/store_screenshots/android/`
 - iOS: `artifacts/store_screenshots/ios/`
+- iPad: `artifacts/store_screenshots/ios_ipad/`
 
 `takeScreenshot` の保存先を flow で固定しているため、プロジェクトルート直下に散らばらない。
 
@@ -101,7 +102,7 @@ firebase emulators:start --project mahjong-mate-app --only auth,firestore,functi
 
 ```bash
 flutter run \
-  -d "iPhone 15 Pro" \
+  -d "iPhone 11 Pro Max" \
   --dart-define=USE_FIREBASE_EMULATORS=true \
   --dart-define=SCREENSHOT_MODE=true \
   --dart-define=SCREENSHOT_AUTH_EMAIL=screenshot@example.com \
@@ -118,6 +119,43 @@ maestro test maestro/flows/ios/store_screenshots.yaml
 
 ```bash
 ./scripts/run_screenshots_ios.sh
+```
+
+## iPad 実行手順
+
+### 1. Firebase Emulator を起動
+
+```bash
+firebase emulators:start --project mahjong-mate-app --only auth,firestore,functions
+```
+
+### 2. スクリーンショット用ダミーデータを投入
+
+```bash
+(cd functions && npm run seed:screenshot)
+```
+
+### 3. アプリを iPad simulator 向けに起動
+
+```bash
+flutter run \
+  -d "iPad Pro (12.9-inch) (6th generation)" \
+  --dart-define=USE_FIREBASE_EMULATORS=true \
+  --dart-define=SCREENSHOT_MODE=true \
+  --dart-define=SCREENSHOT_AUTH_EMAIL=screenshot@example.com \
+  --dart-define=SCREENSHOT_AUTH_PASSWORD=Passw0rd!
+```
+
+### 4. Maestro フロー実行
+
+```bash
+maestro test maestro/flows/ios/store_screenshots_ipad.yaml
+```
+
+または、seed から自動でまとめて実行:
+
+```bash
+./scripts/run_screenshots_ipad.sh
 ```
 
 ## ダミーデータ方針
