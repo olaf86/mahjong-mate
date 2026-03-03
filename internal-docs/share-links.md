@@ -16,7 +16,7 @@ applinks:mahjong-mate-app.web.app
 https://mahjong-mate-app.web.app/.well-known/apple-app-site-association
 ```
 
-Example (replace TEAM_ID if needed):
+Example (replace TEAM_ID):
 
 ```
 {
@@ -24,7 +24,7 @@ Example (replace TEAM_ID if needed):
     "apps": [],
     "details": [
       {
-        "appID": "48C76HC76Y.com.example.mahjongMate",
+        "appID": "TEAM_ID.dev.asobo.mahjongmate",
         "paths": ["/r/*"]
       }
     ]
@@ -46,7 +46,7 @@ https://mahjong-mate-app.web.app/r/*
 https://mahjong-mate-app.web.app/.well-known/assetlinks.json
 ```
 
-Example (replace SHA256 fingerprint when available):
+Example (replace SHA256 fingerprints):
 
 ```
 [
@@ -54,11 +54,34 @@ Example (replace SHA256 fingerprint when available):
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.example.mahjong_mate",
+      "package_name": "dev.asobo.mahjongmate",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_SHA256_CERT_FINGERPRINT"
+        "REPLACE_WITH_PLAY_APP_SIGNING_SHA256",
+        "REPLACE_WITH_UPLOAD_KEY_SHA256_IF_NEEDED"
       ]
     }
   }
 ]
+```
+
+## Android verification
+
+1. Deploy latest hosting content (including `.well-known/assetlinks.json`).
+2. Install app build signed with the certificate listed in `assetlinks.json`.
+3. Confirm connected device/emulator:
+
+```bash
+adb devices
+```
+
+4. Verify app links status on device:
+
+```bash
+adb shell pm get-app-links dev.asobo.mahjongmate
+```
+
+5. Trigger deep link:
+
+```bash
+adb shell am start -a android.intent.action.VIEW -d "https://mahjong-mate-app.web.app/r/ABCD"
 ```

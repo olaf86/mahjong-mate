@@ -3,9 +3,9 @@
     "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.example.mahjong_mate",
+      "package_name": "dev.asobo.mahjongmate",
       "sha256_cert_fingerprints": [
-        "REPLACE_WITH_SHA256_CERT_FINGERPRINT"
+        "F0:EE:2E:5F:72:AC:45:ED:22:9D:17:B7:17:9C:93:FC:E7:54:3A:A2:BB:08:41:15:D0:55:2E:57:A3:08:0C:96"
       ]
     }
   }
