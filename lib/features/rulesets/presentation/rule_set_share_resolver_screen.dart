@@ -38,7 +38,19 @@ class _RuleSetShareResolverScreenState
         if (ruleSet == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('共有コードが見つかりません')),
-            body: const Center(child: Text('指定された共有コードは存在しません。')),
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text('指定された共有コードは存在しません。'),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: () => context.goNamed('ruleset-list'),
+                    child: const Text('一覧に戻る'),
+                  ),
+                ],
+              ),
+            ),
           );
         }
         if (!_navigated) {
