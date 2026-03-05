@@ -11,6 +11,8 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'app.dart';
 import 'shared/config/runtime_mode.dart';
 
+bool get _shouldUseFirebaseEmulators => useFirebaseEmulators && kDebugMode;
+
 Future<void> main() async {
   final binding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: binding);
@@ -35,7 +37,7 @@ Future<void> _initializeFirebase() async {
   }
 
   try {
-    if (useFirebaseEmulators) {
+    if (_shouldUseFirebaseEmulators) {
       await Firebase.initializeApp(
         options: const FirebaseOptions(
           apiKey: 'demo-api-key',
@@ -58,7 +60,7 @@ Future<void> _initializeFirebase() async {
 }
 
 Future<void> _configureFirebaseServices() async {
-  if (useFirebaseEmulators) {
+  if (_shouldUseFirebaseEmulators) {
     final host = firebaseEmulatorHost();
     debugPrint('Using Firebase emulators (host: $host)');
     FirebaseAuth.instance.useAuthEmulator(host, 9099);
@@ -82,7 +84,7 @@ Future<void> _configureFirebaseServices() async {
 
 Future<void> _signInInitialUser() async {
   final auth = FirebaseAuth.instance;
-  if (useFirebaseEmulators && screenshotMode) {
+  if (_shouldUseFirebaseEmulators && screenshotMode) {
     final current = auth.currentUser;
     if (current != null) {
       await auth.signOut();
