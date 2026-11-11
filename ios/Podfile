@@ -31,9 +31,6 @@ target 'Runner' do
   use_modular_headers!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-
-  # Firestore のビルドを爆速にする設定
-  pod 'FirebaseFirestore', :tag => '12.8.0', :git => 'https://github.com/invertase/firestore-ios-sdk-frameworks.git'
   target 'RunnerTests' do
     inherit! :search_paths
   end

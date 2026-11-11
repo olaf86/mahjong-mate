@@ -81,7 +81,7 @@ class _FollowedRuleSetOrderScreenState
                 ),
               );
             },
-            onReorder: (oldIndex, newIndex) =>
+            onReorderItem: (oldIndex, newIndex) =>
                 _onReorder(list, oldIndex, newIndex),
           );
         },
@@ -109,9 +109,6 @@ class _FollowedRuleSetOrderScreenState
     int oldIndex,
     int newIndex,
   ) async {
-    if (newIndex > oldIndex) {
-      newIndex -= 1;
-    }
     final moved = list.removeAt(oldIndex);
     list.insert(newIndex, moved);
     setState(() {
