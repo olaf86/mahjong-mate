@@ -5,6 +5,7 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   app_links
   cloud_firestore
+  firebase_app_check
   firebase_auth
   firebase_core
   share_plus
